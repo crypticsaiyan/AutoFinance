@@ -1,27 +1,83 @@
-# AutoFinance: Multi-Agent Financial AI System
+<div align="center">
 
-**🏆 WeMakeDevs "2 Fast 2 MCP" Hackathon Project**
+# 🤖 AutoFinance
 
-A production-ready, enterprise-grade financial analysis system powered by 13 specialized MCP servers with real market data orchestrated by Archestra AI agents.
+### Multi-Agent Financial AI System
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python](https://img.shields.io/badge/python-3.14+-blue.svg)](https://www.python.org/downloads/)
+[![MCP](https://img.shields.io/badge/MCP-0.9.0+-green.svg)](https://modelcontextprotocol.io/)
+[![FastMCP](https://img.shields.io/badge/FastMCP-0.2.0+-orange.svg)](https://github.com/jlowin/fastmcp)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Hackathon](https://img.shields.io/badge/WeMakeDevs-2%20Fast%202%20MCP-blueviolet)](https://wemakedevs.org)
+
+**A production-ready, enterprise-grade financial analysis system powered by 13 specialized MCP servers with real market data orchestrated by Archestra AI agents.**
+
+[Features](#-features) • [Quick Start](#-quick-start) • [Architecture](#-architecture) • [Documentation](#-documentation) • [License](#-license)
+
+</div>
 
 ---
 
-## 🎯 What is AutoFinance?
+## 📸 Screenshots
+
+<div align="center">
+
+### Dashboard View
+<!-- Add screenshot here: ![Dashboard](docs/screenshots/dashboard.png) -->
+*Coming soon: Multi-chart dashboard with real-time market data*
+
+### CLI Interface
+<!-- Add screenshot here: ![CLI](docs/screenshots/cli.png) -->
+*Coming soon: Beautiful terminal-based interface with Braille charts*
+
+### Agent Orchestration
+<!-- Add screenshot here: ![Agents](docs/screenshots/agents.png) -->
+*Coming soon: 12-agent hierarchy with Archestra orchestration*
+
+</div>
+
+---
+
+## 🎯 Features
 
 AutoFinance is an **AI-powered financial control plane** that combines:
-- **13 specialized MCP servers** (market data, technical analysis, risk management, execution, compliance, etc.)
-- **Multi-agent orchestration** via Archestra (12 hierarchical AI agents)
-- **Real Yahoo Finance data** (not mocks!) for technical, fundamental, and volatility analysis
-- **Production-grade governance** with risk validation, audit logging, and compliance tracking
-- **Multi-channel notifications** (Slack, WhatsApp, SMS, Email)
 
-**Use Cases:**
-- Short-term trading with technical analysis
-- Long-term investing with fundamental research
-- Portfolio management and rebalancing
-- Risk assessment and position validation
-- Price alerts and strategy simulations
-- Comprehensive audit trails for compliance
+### Core Capabilities
+- 🔌 **13 Specialized MCP Servers** - Market data, technical analysis, risk management, execution, compliance
+- 🤖 **12 AI Agents** - Hierarchical agent orchestration via Archestra
+- 📊 **Real Market Data** - Live Yahoo Finance integration (no mocks!)
+- 🛡️ **Production Governance** - Risk validation, audit logging, compliance tracking
+- 📢 **Multi-Channel Notifications** - Slack, WhatsApp, SMS, Email
+
+### Use Cases
+- 📈 Short-term trading with technical analysis
+- 💼 Long-term investing with fundamental research
+- 🎯 Portfolio management and rebalancing
+- ⚠️ Risk assessment and position validation
+- 🔔 Price alerts and strategy simulations
+- 📝 Comprehensive audit trails for compliance
+
+---
+
+## 📋 Table of Contents
+
+- [Features](#-features)
+- [Screenshots](#-screenshots)
+- [Architecture](#-architecture)
+- [Quick Start](#-quick-start)
+- [CLI Interface](#-cli-interface)
+- [Testing](#-testing)
+- [Real Data Examples](#-real-data-examples)
+- [Demo Scenarios](#-demo-scenarios)
+- [Security & Compliance](#-security--compliance)
+- [Advanced Configuration](#-advanced-configuration)
+- [Project Structure](#-project-structure)
+- [Key Technical Decisions](#-key-technical-decisions)
+- [Support & Troubleshooting](#-support--troubleshooting)
+- [Contributing](#-contributing)
+- [License](#-license)
+- [Acknowledgments](#-acknowledgments)
 
 ---
 
@@ -60,7 +116,7 @@ Level 1: Portfolio Manager (CEO)
         └── Level 3: Notification Dispatcher
 ```
 
-**See [AGENT_DEFINITIONS.md](AGENT_DEFINITIONS.md) for complete agent configurations.**
+**See [Agent_def.md](Agent_def.md) for complete agent configurations.**
 
 ---
 
@@ -156,14 +212,57 @@ Go to **Archestra UI → MCP Registry** and add these 13 servers:
 
 ### 5. Create Agents in Archestra
 
-Follow the detailed instructions in [AGENT_DEFINITIONS.md](AGENT_DEFINITIONS.md) to create all 12 agents with proper system prompts and tool assignments.
+Follow the detailed instructions in [Agent_def.md](Agent_def.md) to create all 12 agents with proper system prompts and tool assignments.
 
 **Quick Agent Creation:**
 1. Go to **Agents → Create New**
-2. Copy Name and System Prompt from AGENT_DEFINITIONS.md
+2. Copy Name and System Prompt from [Agent_def.md](Agent_def.md)
 3. Enable listed tools from MCP servers
 4. Configure sub-agents if applicable
 5. Save and repeat for all 12 agents
+
+---
+
+## 🖥️ CLI Interface
+
+AutoFinance includes a beautiful, intuitive terminal-based interface for interactive trading and portfolio management.
+
+### Features
+- 📊 **Live Charts** - Multiple stock/crypto charts with braille-dot graphics
+- 💬 **Copilot Chat** - Interactive AI chat with MCP tool access
+- 💼 **Portfolio Tracker** - Real-time portfolio value and P&L
+- 🔍 **Symbol Search** - Quick search and favorites management
+- ⌨️ **Keyboard Navigation** - Intuitive shortcuts, no mouse required
+
+### Quick Start
+```bash
+cd cli
+./install.fish      # Install dependencies
+./run.fish          # Launch CLI
+```
+
+Or run directly:
+```bash
+cd cli
+python main.py
+```
+
+### Keyboard Shortcuts
+| Key | Action |
+|-----|--------|
+| `1` | Charts View |
+| `2` | Search View |
+| `3` | Chat View |
+| `H` | Help |
+| `R` | Refresh |
+| `Q` | Quit |
+
+### Data Sources
+- **Binance** - Real-time crypto prices (WebSocket)
+- **Yahoo Finance** - Stock market data (polling)
+- Both sources work without API keys for public data
+
+For complete CLI documentation, see [cli/CLI_README.md](cli/CLI_README.md)
 
 ---
 
@@ -426,37 +525,41 @@ RISK_POLICY = {
 ## 📁 Project Structure
 
 ```
-/home/cryptosaiyan/Documents/AutoFinance/
-├── mcp-servers/              # 13 MCP server implementations
-│   ├── market/
-│   │   └── server_real.py   # Yahoo Finance integration
-│   ├── risk/
-│   │   └── server.py        # Risk validation logic
-│   ├── execution/
-│   │   └── server.py        # Portfolio state & trades
-│   ├── compliance/
-│   │   └── server.py        # Audit logging
-│   ├── technical/
-│   │   └── server.py        # RSI, MACD, Bollinger Bands
-│   ├── fundamental/
-│   │   └── server.py        # P/E, ROE, fundamentals
-│   ├── volatility/
-│   │   └── server.py        # Volatility calculations
-│   ├── news/
-│   │   └── server.py        # Sentiment analysis
-│   ├── macro/
-│   │   └── server.py        # GDP, inflation, rates
-│   ├── portfolio-analytics/
-│   │   └── server.py        # Portfolio metrics
-│   ├── alert-engine/
-│   │   └── server.py        # Price alerts
-│   ├── simulation-engine/
-│   │   └── server.py        # Monte Carlo simulations
-│   ├── notification-gateway/
-│   │   └── server.py        # Multi-channel notifications
-│   └── requirements.txt      # Python dependencies
-│
-├── tests/                    # Comprehensive test suite
+AutoFinance/
+├── mcp-servers/                    # 13 MCP server implementations
+│   ├── market/server.py           # Yahoo Finance integration
+│   ├── risk/server.py             # Risk validation logic
+│   ├── execution/server.py        # Portfolio state & trades
+│   ├── compliance/server.py       # Audit logging
+│   ├── technical/server.py        # RSI, MACD, Bollinger Bands
+│   ├── fundamental/server.py      # P/E, ROE, fundamentals
+│   ├── volatility/server.py       # Volatility calculations
+│   ├── news/server.py             # Sentiment analysis
+│   ├── macro/server.py            # GDP, inflation, rates
+│   ├── portfolio-analytics/server.py  # Portfolio metrics
+│   ├── alert-engine/server.py     # Price alerts
+│   ├── simulation-engine/server.py    # Monte Carlo simulations
+│   ├── notification-gateway/server.py # Multi-channel notifications
+│   ├── llm_client.py              # LLM integration utilities
+│   └── requirements.txt           # Python dependencies
+├── cli/                           # Terminal-based interface
+│   ├── main.py                    # CLI entry point
+│   ├── dashboard.py               # Dashboard view
+│   ├── dashboard_textual.py       # Textual-based dashboard
+│   ├── config.yaml                # CLI configuration
+│   ├── CLI_README.md              # CLI documentation
+│   ├── install.fish               # Installation script
+│   ├── run.fish                   # Launch script
+│   ├── components/                # UI components
+│   │   ├── charts.py
+│   │   ├── chatbox.py
+│   │   ├── portfolio.py
+│   │   └── search.py
+│   ├── data/                      # Data fetchers
+│   │   └── fetchers.py
+│   └── utils/                     # Utilities
+│       └── keyboard.py
+├── tests/                         # Comprehensive test suite
 │   ├── test_market_server.py
 │   ├── test_technical_server.py
 │   ├── test_fundamental_server.py
@@ -465,17 +568,16 @@ RISK_POLICY = {
 │   ├── test_macro_server.py
 │   ├── test_risk_server.py
 │   ├── test_execution_server.py
-│   └── test_all_servers.py   # Master test runner
-│
-├── mcp_sse_server.py         # Main server wrapper
-├── start_sse_servers.fish    # Startup script (ONLY ONE NEEDED)
-├── archestra-servers.json    # Archestra MCP config
-│
-├── README.md                 # This file
-├── AGENT_DEFINITIONS.md      # Complete agent configurations
-├── REAL_DATA_COMPLETE.md     # Implementation details
-├── CONTEXT_EXPORT.md         # Full context for continuity
-└── venv/                     # Python virtual environment
+│   ├── test_all_servers.py        # Master test runner
+│   └── README.md                  # Testing documentation
+├── mcp_sse_server.py              # Main server wrapper
+├── start_sse_servers.fish         # Startup script
+├── alert_monitor.py               # Alert monitoring daemon
+├── Agent_def.md                   # Agent configurations
+├── README.md                      # This file
+├── LICENSE                        # MIT License
+├── .gitignore                     # Git ignore rules
+└── venv/                          # Python virtual environment
 ```
 
 ---
@@ -506,21 +608,58 @@ RISK_POLICY = {
 
 ---
 
-## 🏆 Hackathon Competitive Advantages
+## 🤝 Contributing
 
-1. **Real Data:** Only project using actual Yahoo Finance, not mocks
-2. **Production Architecture:** 13 servers, 12 agents, real governance
-3. **Comprehensive Testing:** 8 test scripts, 100% coverage
-4. **Multi-Domain:** Trading + Investing + Operations in one system
-5. **Audit & Compliance:** Enterprise-grade logging and validation
-6. **Scalable Design:** Easy to extend with more agents/servers
-7. **Complete Documentation:** README, agent definitions, context export
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
 
-**This is not a prototype. This is a deployable system.**
+### Development Setup
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Install dependencies (`pip install -r mcp-servers/requirements.txt`)
+4. Make your changes
+5. Run tests (`cd tests && python test_all_servers.py`)
+6. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+7. Push to the branch (`git push origin feature/AmazingFeature`)
+8. Open a Pull Request
+
+### Future Enhancements
+- 🎯 Add investor features (retirement planning, diversification scoring)
+- 📊 Integrate paid APIs (Bloomberg, Refinitiv) for institutional data
+- 🔄 Implement backtesting engine for strategy validation
+- 🌐 Add web UI for direct user interaction
+- ☁️ Deploy to cloud (AWS, GCP, Azure) with Kubernetes
+- 📱 Mobile app integration
+- 🔔 Advanced alert conditions and triggers
 
 ---
 
-## 📞 Support & Troubleshooting
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- **WeMakeDevs** for organizing "2 Fast 2 MCP" hackathon
+- **Anthropic** for Model Context Protocol specification
+- **Archestra** for AI orchestration platform
+- **Yahoo Finance** for free, reliable market data
+- **FastMCP** for excellent Python MCP framework
+
+---
+
+<div align="center">
+
+**Built with ❤️ by the AutoFinance Team**
+
+**Status:** Production-Ready ✅  
+**Tests:** Passing ✅  
+**Data:** 100% Real from Yahoo Finance ✅
+
+[⬆ Back to Top](#-autofinance)
+
+</div>
 
 ### Servers Not Starting?
 ```bash
@@ -571,12 +710,10 @@ pip install -r mcp-servers/requirements.txt
 
 ## 📚 Additional Resources
 
-- [AGENT_DEFINITIONS.md](AGENT_DEFINITIONS.md) - Complete agent system prompts
-- [REAL_DATA_COMPLETE.md](REAL_DATA_COMPLETE.md) - Implementation details
-- [CONTEXT_EXPORT.md](CONTEXT_EXPORT.md) - Full technical context
-- [MCP Documentation](https://modelcontextprotocol.io/docs) - MCP protocol spec
+- [Agent_def.md](Agent_def.md) - Complete agent system prompts and configurations
+- [MCP Documentation](https://modelcontextprotocol.io/docs) - MCP protocol specification
 - [Archestra Docs](https://archestra.ai/docs) - AI orchestration platform
-- [yfinance Docs](https://pypi.org/project/yfinance/) - Yahoo Finance API
+- [yfinance Docs](https://pypi.org/project/yfinance/) - Yahoo Finance API library
 
 ---
 
@@ -610,40 +747,14 @@ MIT License - See LICENSE file for details
 
 ---
 
-**Built with ❤️ for WeMakeDevs Hackathon**
+<div align="center">
 
-**Date:** February 15, 2026  
-**Status:** Production-Ready  
-**Tests:** 15/15 Passing ✅  
-**Servers:** 12/13 Running ✅  
+**Built with ❤️ by the AutoFinance Team**
+
+**Status:** Production-Ready ✅  
+**Tests:** Passing ✅  
 **Data:** 100% Real from Yahoo Finance ✅
 
----
+[⬆ Back to Top](#-autofinance)
 
-## 🚀 Quick Command Reference
-
-```bash
-# Start all servers
-./start_sse_servers.fish
-
-# Stop all servers
-pkill -f "mcp_sse_server.py"
-
-# Run all tests
-cd tests && python test_all_servers.py
-
-# Check server status
-ps aux | grep "mcp_sse_server.py" | grep -v grep
-
-# Access Archestra
-open http://localhost:3000
-
-# Test single server
-curl -X POST http://172.17.0.1:9001/mcp \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
-```
-
----
-
-**Ready to deploy. Ready to demo. Ready to win. 🏆**
+</div>

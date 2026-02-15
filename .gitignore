@@ -188,9 +188,15 @@ $RECYCLE.BIN/
 
 # Project-specific
 # ================
-# Keep these if you want to exclude specific files
+# CLI Demo Files
+*demo*.py
+*landing*.py
+*test_archestra*.py
+
+# Documentation Archives
 REAL_DATA_COMPLETE.md
 CONTEXT_EXPORT.md
+DEMO_GUIDE.md
 
 # Archestra/Orchestra related (if any local config)
 # ==================================================

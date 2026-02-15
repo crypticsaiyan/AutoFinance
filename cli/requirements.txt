@@ -1,0 +1,32 @@
+# AutoFinance CLI Interface Requirements
+
+# Terminal UI
+textual>=1.0.0
+rich>=13.7.0
+asciichartpy>=1.5.25
+pyfiglet>=1.0.2
+
+# Data fetching
+yfinance>=0.2.36
+python-binance>=1.0.19
+
+# Keyboard input
+keyboard>=0.13.5
+pynput>=1.7.6
+
+# Async
+asyncio>=3.4.3
+
+# Config management
+pyyaml>=6.0.1
+python-dotenv>=1.0.0
+
+# Data processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# HTTP requests for MCP
+requests>=2.31.0
+
+# Date/time
+python-dateutil>=2.8.2
