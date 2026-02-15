@@ -1,0 +1,203 @@
+# Python
+# ======
+*.py[cod]
+*$py.class
+*.so
+.Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+.hypothesis/
+
+# Virtual Environment
+# ==================
+venv/
+env/
+ENV/
+.venv/
+.env/
+virtualenv/
+
+# Environment Variables & Secrets
+# ===============================
+.env
+.env.local
+.env.*.local
+*.key
+secrets.json
+credentials.json
+
+# API Keys (if you add them later)
+# ================================
+*API_KEY*
+*api_key*
+*_TOKEN*
+*_SECRET*
+
+# IDE & Editor
+# ============
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+.project
+.pydevproject
+
+# OS-specific
+# ===========
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs & Debugging
+# ================
+*.log
+logs/
+*.pid
+*.seed
+*.pid.lock
+server.log
+debug.log
+error.log
+
+# MCP Server Specific
+# ===================
+# Server output/logs
+mcp_server_*.log
+server_output.txt
+
+# Cache Files
+# ===========
+*.cache
+.cache/
+*_cache/
+.yfinance_cache/
+*.pkl
+*.pickle
+
+# Test Output
+# ===========
+.pytest_cache/
+tests/__pycache__/
+tests/*.pyc
+test_results/
+coverage.xml
+.coverage
+htmlcov/
+server_tools_output.txt
+query_output.txt
+
+# Data Files (optional - uncomment if needed)
+# ============================================
+# data/
+# *.csv
+# *.json
+# *.db
+# *.sqlite
+# *.sqlite3
+
+# Alert/Notification Files
+# =========================
+alerts_*.json
+notifications/
+audit_log.json
+
+# Temporary Files
+# ===============
+tmp/
+temp/
+*.tmp
+*.bak
+*.backup
+
+# Build & Distribution
+# ====================
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+
+# Documentation Build
+# ===================
+docs/_build/
+site/
+
+# Jupyter Notebooks (if you add any)
+# ===================================
+.ipynb_checkpoints/
+*.ipynb
+
+# Database (if you add persistence)
+# ==================================
+*.db
+*.sqlite
+*.sqlite3
+portfolio.db
+market_data.db
+
+# Node modules (if you add any frontend)
+# =======================================
+node_modules/
+package-lock.json
+yarn.lock
+
+# Compiled files
+# ==============
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Docker (if you containerize the servers)
+# =========================================
+.docker/
+docker-compose.override.yml
+
+# macOS
+# =====
+.AppleDouble
+.LSOverride
+Icon
+
+# Linux
+# =====
+.directory
+.Trash-*
+.nfs*
+
+# Windows
+# =======
+desktop.ini
+$RECYCLE.BIN/
+
+# Project-specific
+# ================
+# Keep these if you want to exclude specific files
+REAL_DATA_COMPLETE.md
+CONTEXT_EXPORT.md
+
+# Archestra/Orchestra related (if any local config)
+# ==================================================
+.archestra/
+orchestra_config.json
+
+# FastMCP/MCP cache
+# =================
+.mcp_cache/
+mcp_session_*.json

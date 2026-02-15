@@ -28,13 +28,36 @@ mcp = FastMCP("auto-finance-technical")
 
 def _get_ticker_symbol(symbol: str) -> str:
     """Convert symbol to Yahoo Finance format."""
+    s = symbol.upper()
+    
+    # Map common crypto symbols to Yahoo format
     crypto_map = {
-        "BTCUSDT": "BTC-USD",
-        "ETHUSDT": "ETH-USD",
-        "SOLUSDT": "SOL-USD",
-        "BNBUSDT": "BNB-USD",
+        "BTC": "BTC-USD", "ETH": "ETH-USD", "SOL": "SOL-USD", "BNB": "BNB-USD",
+        "XRP": "XRP-USD", "DOGE": "DOGE-USD", "ADA": "ADA-USD", "AVAX": "AVAX-USD",
+        "DOT": "DOT-USD", "MATIC": "MATIC-USD", "LINK": "LINK-USD", "UNI": "UNI-USD",
+        "LTC": "LTC-USD", "BCH": "BCH-USD", "ALGO": "ALGO-USD", "XLM": "XLM-USD",
+        "NEAR": "NEAR-USD", "ATOM": "ATOM-USD", "ICP": "ICP-USD", "FIL": "FIL-USD"
     }
-    return crypto_map.get(symbol, symbol)
+    
+    # 1. Check exact match
+    if s in crypto_map:
+        return crypto_map[s]
+        
+    # 2. Check USDT pair (e.g. BTCUSDT, TSLAUSDT)
+    if s.endswith("USDT"):
+        base = s.replace("USDT", "")
+        # If the base is a known crypto, use the crypto format
+        if base in crypto_map:
+            return crypto_map[base]
+        # Otherwise assume it's a stock
+        return base
+        
+    # 3. Check -USD format
+    if s.endswith("-USD"):
+        return s
+        
+    # 4. Default to generic (usually stock)
+    return s
 
 
 def get_real_historical_prices(symbol: str, period: str = "3mo", interval: str = "1d") -> List[float]:
@@ -476,6 +499,21 @@ def calculate_bollinger_bands_tool(symbol: str, period: int = 20) -> Dict[str, A
 def generate_mock_prices(base_price: float, count: int = 50) -> list:
     """DEPRECATED: Use get_real_historical_prices() instead"""
     return [base_price] * count
+
+
+# --- Convenience Aliases for LLM compatibility ---
+
+@mcp.tool()
+def get_support_resistance(symbol: str, period: str = "6mo") -> Dict[str, Any]:
+    """Alias for calculate_support_resistance"""
+    return calculate_support_resistance(symbol, period)
+
+@mcp.tool()
+def analyze_trend(symbol: str) -> Dict[str, Any]:
+    """Alias for calculate_macd_tool (trend analysis)"""
+    return calculate_macd_tool(symbol)
+
+
 
 
 if __name__ == "__main__":

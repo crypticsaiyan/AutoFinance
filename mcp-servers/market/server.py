@@ -1,247 +1,244 @@
 """
 AutoFinance Market Server
 
-Real-time market data provider.
+Real-time market data provider using Yahoo Finance.
 - Live price data
 - Historical candles
-- Volatility calculations
+- Market overview
 
 Tools:
 - get_live_price: Get current market price
 - get_candles: Get historical OHLCV data
-- calculate_volatility: Calculate price volatility
+- get_market_overview: Major market indices snapshot
 """
 
 from mcp.server.fastmcp import FastMCP
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
-import math
-import random
-
+import yfinance as yf
+import pandas as pd
+from functools import lru_cache
+import time
 
 # Initialize MCP Server
 mcp = FastMCP("auto-finance-market")
 
-
-# Simulation mode for deterministic demo
-SIMULATION_MODE = {
-    "enabled": False,
-    "prices": {
-        "BTCUSDT": 48000.0,
-        "ETHUSDT": 2800.0,
-        "SOLUSDT": 110.0
-    },
-    "volatility_multiplier": 1.0
-}
+# Price cache to avoid rate limiting
+_price_cache = {}
+_CACHE_TTL = 60  # seconds
 
 
-def generate_mock_price(symbol: str, base_price: float, volatility: float = 0.02) -> float:
-    """Generate realistic mock price with volatility"""
-    if SIMULATION_MODE["enabled"]:
-        return SIMULATION_MODE["prices"].get(symbol, base_price)
+def _get_ticker_symbol(symbol: str) -> str:
+    """Convert symbol to Yahoo Finance format."""
+    s = symbol.upper()
     
-    # Random walk with drift
-    change = random.gauss(0, volatility)
-    return base_price * (1 + change)
-
-
-def generate_mock_candles(symbol: str, base_price: float, periods: int) -> List[Dict]:
-    """Generate realistic OHLCV candle data"""
-    candles = []
-    current_price = base_price
+    # Map common crypto symbols to Yahoo format
+    crypto_map = {
+        "BTC": "BTC-USD", "ETH": "ETH-USD", "SOL": "SOL-USD", "BNB": "BNB-USD",
+        "XRP": "XRP-USD", "DOGE": "DOGE-USD", "ADA": "ADA-USD", "AVAX": "AVAX-USD",
+        "DOT": "DOT-USD", "MATIC": "MATIC-USD", "LINK": "LINK-USD", "UNI": "UNI-USD",
+        "LTC": "LTC-USD", "BCH": "BCH-USD", "ALGO": "ALGO-USD", "XLM": "XLM-USD",
+        "NEAR": "NEAR-USD", "ATOM": "ATOM-USD", "ICP": "ICP-USD", "FIL": "FIL-USD"
+    }
     
-    now = datetime.utcnow()
-    
-    for i in range(periods):
-        timestamp = now - timedelta(hours=periods - i)
+    # 1. Check exact match
+    if s in crypto_map:
+        return crypto_map[s]
         
-        # Generate OHLC with realistic movements
-        open_price = current_price
-        high_price = open_price * random.uniform(1.0, 1.02)
-        low_price = open_price * random.uniform(0.98, 1.0)
-        close_price = random.uniform(low_price, high_price)
-        volume = random.uniform(1000, 10000)
+    # 2. Check USDT pair (e.g. BTCUSDT, TSLAUSDT)
+    if s.endswith("USDT"):
+        base = s.replace("USDT", "")
+        # If the base is a known crypto, use the crypto format
+        if base in crypto_map:
+            return crypto_map[base]
+        # Otherwise assume it's a stock
+        return base
         
-        candles.append({
-            "timestamp": timestamp.isoformat(),
-            "open": round(open_price, 2),
-            "high": round(high_price, 2),
-            "low": round(low_price, 2),
-            "close": round(close_price, 2),
-            "volume": round(volume, 2)
-        })
+    # 3. Check -USD format
+    if s.endswith("-USD"):
+        return s
         
-        current_price = close_price
-    
-    return candles
+    # 4. Default to generic (usually stock)
+    return s
 
 
 @mcp.tool()
 def get_live_price(symbol: str) -> Dict[str, Any]:
     """
-    Get current live price for a symbol.
+    Get real-time market price for a symbol.
     
-    In production, this would call Binance API.
-    For demo, uses deterministic simulation.
+    Args:
+        symbol: Trading symbol (e.g., 'AAPL', 'BTCUSDT', 'TSLA')
+    
+    Returns:
+        Dictionary with symbol, price, timestamp, and additional market data
     """
-    # Base prices for common symbols
-    base_prices = {
-        "BTCUSDT": 48000.0,
-        "ETHUSDT": 2800.0,
-        "SOLUSDT": 110.0,
-        "BNBUSDT": 580.0,
-        "ADAUSDT": 0.58
-    }
+    # Check cache first
+    cache_key = f"{symbol}:{int(time.time() // _CACHE_TTL)}"
+    if cache_key in _price_cache:
+        return _price_cache[cache_key]
     
-    base_price = base_prices.get(symbol, 100.0)
-    
-    if SIMULATION_MODE["enabled"]:
-        current_price = SIMULATION_MODE["prices"].get(symbol, base_price)
-    else:
-        # Simulate slight price movement
-        current_price = generate_mock_price(symbol, base_price, volatility=0.005)
-    
-    return {
-        "symbol": symbol,
-        "price": round(current_price, 2),
-        "timestamp": datetime.utcnow().isoformat(),
-        "source": "simulation" if SIMULATION_MODE["enabled"] else "live_mock"
-    }
+    try:
+        yf_symbol = _get_ticker_symbol(symbol)
+        ticker = yf.Ticker(yf_symbol)
+        
+        # Get current data
+        info = ticker.info
+        hist = ticker.history(period="1d", interval="1m")
+        
+        if hist.empty:
+            return {
+                "error": f"No data available for {symbol}",
+                "symbol": symbol,
+                "timestamp": datetime.now().isoformat()
+            }
+        
+        current_price = hist['Close'].iloc[-1]
+        
+        result = {
+            "symbol": symbol,
+            "price": round(float(current_price), 2),
+            "timestamp": datetime.now().isoformat(),
+            "market_cap": info.get("marketCap"),
+            "volume_24h": int(hist['Volume'].sum()) if len(hist) > 0 else None,
+            "change_24h": round(float(hist['Close'].iloc[-1] - hist['Open'].iloc[0]), 2) if len(hist) > 1 else 0,
+            "change_24h_pct": round(((hist['Close'].iloc[-1] / hist['Open'].iloc[0]) - 1) * 100, 2) if len(hist) > 1 else 0,
+            "high_24h": round(float(hist['High'].max()), 2),
+            "low_24h": round(float(hist['Low'].min()), 2),
+            "source": "Yahoo Finance"
+        }
+        
+        # Cache the result
+        _price_cache[cache_key] = result
+        
+        return result
+        
+    except Exception as e:
+        return {
+            "error": str(e),
+            "symbol": symbol,
+            "timestamp": datetime.now().isoformat()
+        }
 
 
 @mcp.tool()
 def get_candles(
     symbol: str,
-    interval: str = "1h",
-    limit: int = 24
+    timeframe: str = "1h",
+    periods: int = 24
 ) -> Dict[str, Any]:
     """
-    Get historical OHLCV candle data.
+    Get historical OHLCV candlestick data.
     
     Args:
-        symbol: Trading pair symbol
-        interval: Candle interval (1h, 4h, 1d)
-        limit: Number of candles to return
+        symbol: Trading symbol
+        timeframe: Candle timeframe (1m, 5m, 15m, 1h, 1d)
+        periods: Number of candles to retrieve
+    
+    Returns:
+        Dictionary with symbol, timeframe, and list of OHLCV candles
     """
-    base_prices = {
-        "BTCUSDT": 48000.0,
-        "ETHUSDT": 2800.0,
-        "SOLUSDT": 110.0,
-        "BNBUSDT": 580.0,
-        "ADAUSDT": 0.58
-    }
-    
-    base_price = base_prices.get(symbol, 100.0)
-    candles = generate_mock_candles(symbol, base_price, limit)
-    
-    return {
-        "symbol": symbol,
-        "interval": interval,
-        "candles": candles,
-        "count": len(candles),
-        "timestamp": datetime.utcnow().isoformat()
-    }
-
-
-@mcp.tool()
-def calculate_volatility(symbol: str, period: int = 24) -> Dict[str, Any]:
-    """
-    Calculate price volatility over a period.
-    
-    Returns annualized volatility as a percentage.
-    """
-    # Get historical data
-    candles_data = get_candles(symbol, limit=period)
-    candles = candles_data["candles"]
-    
-    if len(candles) < 2:
+    try:
+        yf_symbol = _get_ticker_symbol(symbol)
+        ticker = yf.Ticker(yf_symbol)
+        
+        # Map timeframe to yfinance parameters
+        interval_map = {
+            "1m": ("1d", "1m"),
+            "5m": ("5d", "5m"),
+            "15m": ("5d", "15m"),
+            "1h": ("1mo", "1h"),
+            "1d": ("1y", "1d"),
+        }
+        
+        period, interval = interval_map.get(timeframe, ("1mo", "1h"))
+        
+        # Fetch data
+        hist = ticker.history(period=period, interval=interval)
+        
+        if hist.empty:
+            return {
+                "error": f"No data available for {symbol}",
+                "symbol": symbol,
+                "timeframe": timeframe
+            }
+        
+        # Take last N periods
+        hist = hist.tail(periods)
+        
+        # Convert to candle format
+        candles = []
+        for idx, row in hist.iterrows():
+            candles.append({
+                "timestamp": idx.isoformat(),
+                "open": round(float(row['Open']), 2),
+                "high": round(float(row['High']), 2),
+                "low": round(float(row['Low']), 2),
+                "close": round(float(row['Close']), 2),
+                "volume": int(row['Volume'])
+            })
+        
         return {
             "symbol": symbol,
-            "volatility": 0.0,
-            "error": "Insufficient data"
+            "timeframe": timeframe,
+            "periods": len(candles),
+            "candles": candles,
+            "source": "Yahoo Finance"
         }
-    
-    # Calculate returns
-    returns = []
-    for i in range(1, len(candles)):
-        prev_close = candles[i-1]["close"]
-        curr_close = candles[i]["close"]
-        ret = (curr_close - prev_close) / prev_close
-        returns.append(ret)
-    
-    # Calculate standard deviation of returns
-    mean_return = sum(returns) / len(returns)
-    variance = sum((r - mean_return) ** 2 for r in returns) / len(returns)
-    std_dev = math.sqrt(variance)
-    
-    # Annualize (assuming hourly data -> 24 * 365 periods per year)
-    annualized_volatility = std_dev * math.sqrt(24 * 365)
-    
-    # Apply simulation multiplier if in special mode
-    if SIMULATION_MODE["enabled"]:
-        annualized_volatility *= SIMULATION_MODE["volatility_multiplier"]
-    
-    return {
-        "symbol": symbol,
-        "volatility": round(annualized_volatility, 4),
-        "period": period,
-        "risk_level": "HIGH" if annualized_volatility > 0.5 else "MEDIUM" if annualized_volatility > 0.3 else "LOW",
-        "timestamp": datetime.utcnow().isoformat()
-    }
-
-
-@mcp.tool()
-def get_market_overview(symbols: List[str]) -> Dict[str, Any]:
-    """
-    Get market overview for multiple symbols.
-    """
-    overview = []
-    
-    for symbol in symbols:
-        price_data = get_live_price(symbol)
-        vol_data = calculate_volatility(symbol)
         
-        overview.append({
+    except Exception as e:
+        return {
+            "error": str(e),
             "symbol": symbol,
-            "price": price_data["price"],
-            "volatility": vol_data["volatility"],
-            "risk_level": vol_data["risk_level"]
-        })
-    
-    return {
-        "markets": overview,
-        "count": len(overview),
-        "timestamp": datetime.utcnow().isoformat()
-    }
+            "timeframe": timeframe
+        }
+
+
 
 
 @mcp.tool()
-def set_simulation_mode(
-    enabled: bool,
-    prices: Optional[Dict[str, float]] = None,
-    volatility_multiplier: float = 1.0
-) -> Dict[str, Any]:
+def get_market_overview() -> Dict[str, Any]:
     """
-    Configure simulation mode (for deterministic demos).
+    Get overview of major market indices.
     
-    Args:
-        enabled: Enable/disable simulation mode
-        prices: Fixed prices for symbols
-        volatility_multiplier: Multiply volatility calculations
+    Returns:
+        Dictionary with major market index data
     """
-    SIMULATION_MODE["enabled"] = enabled
+    indices = {
+        "S&P 500": "^GSPC",
+        "Dow Jones": "^DJI",
+        "NASDAQ": "^IXIC",
+        "Bitcoin": "BTC-USD",
+        "Ethereum": "ETH-USD"
+    }
     
-    if prices:
-        SIMULATION_MODE["prices"].update(prices)
+    overview = {}
     
-    SIMULATION_MODE["volatility_multiplier"] = volatility_multiplier
+    for name, symbol in indices.items():
+        try:
+            ticker = yf.Ticker(symbol)
+            hist = ticker.history(period="2d", interval="1d")
+            
+            if not hist.empty and len(hist) >= 2:
+                current = hist['Close'].iloc[-1]
+                previous = hist['Close'].iloc[-2]
+                change_pct = ((current / previous) - 1) * 100
+                
+                overview[name] = {
+                    "price": round(float(current), 2),
+                    "change_pct": round(float(change_pct), 2),
+                    "trend": "UP" if change_pct > 0 else "DOWN"
+                }
+        except:
+            overview[name] = {"error": "Data unavailable"}
     
     return {
-        "success": True,
-        "simulation_mode": SIMULATION_MODE,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now().isoformat(),
+        "indices": overview,
+        "source": "Yahoo Finance"
     }
 
 
 if __name__ == "__main__":
+    # Run the MCP server
     mcp.run()

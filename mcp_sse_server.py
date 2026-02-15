@@ -21,7 +21,7 @@ def create_app(server_name: str, server_path: str):
     sys.path.insert(0, str(Path(server_path).parent))
     
     if server_name == "market":
-        from market.server_real import mcp
+        from market.server import mcp
     elif server_name == "risk":
         from risk.server import mcp
     elif server_name == "execution":
@@ -43,11 +43,6 @@ def create_app(server_name: str, server_path: str):
         mcp = portfolio_module.mcp
     elif server_name == "volatility":
         from volatility.server import mcp
-    elif server_name == "alert-engine":
-        sys.path.insert(0, str(Path(server_path).parent.parent))
-        import importlib
-        alert_module = importlib.import_module("alert-engine.server")
-        mcp = alert_module.mcp
     elif server_name == "simulation-engine":
         sys.path.insert(0, str(Path(server_path).parent.parent))
         import importlib
@@ -75,7 +70,7 @@ def create_app(server_name: str, server_path: str):
 # Server configurations
 SERVERS = {
     "market": {
-        "path": "mcp-servers/market/server_real.py",
+        "path": "mcp-servers/market/server.py",
         "port": 9001
     },
     "risk": {
@@ -113,10 +108,6 @@ SERVERS = {
     "volatility": {
         "path": "mcp-servers/volatility/server.py",
         "port": 9010
-    },
-    "alert-engine": {
-        "path": "mcp-servers/alert-engine/server.py",
-        "port": 9011
     },
     "simulation-engine": {
         "path": "mcp-servers/simulation-engine/server.py",

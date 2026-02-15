@@ -24,13 +24,36 @@ mcp = FastMCP("auto-finance-fundamental")
 
 def _get_ticker_symbol(symbol: str) -> str:
     """Convert symbol to Yahoo Finance format."""
+    s = symbol.upper()
+    
+    # Map common crypto symbols to Yahoo format
     crypto_map = {
-        "BTCUSDT": "BTC-USD",
-        "ETHUSDT": "ETH-USD",
-        "SOLUSDT": "SOL-USD",
-        "BNBUSDT": "BNB-USD",
+        "BTC": "BTC-USD", "ETH": "ETH-USD", "SOL": "SOL-USD", "BNB": "BNB-USD",
+        "XRP": "XRP-USD", "DOGE": "DOGE-USD", "ADA": "ADA-USD", "AVAX": "AVAX-USD",
+        "DOT": "DOT-USD", "MATIC": "MATIC-USD", "LINK": "LINK-USD", "UNI": "UNI-USD",
+        "LTC": "LTC-USD", "BCH": "BCH-USD", "ALGO": "ALGO-USD", "XLM": "XLM-USD",
+        "NEAR": "NEAR-USD", "ATOM": "ATOM-USD", "ICP": "ICP-USD", "FIL": "FIL-USD"
     }
-    return crypto_map.get(symbol, symbol)
+    
+    # 1. Check exact match
+    if s in crypto_map:
+        return crypto_map[s]
+        
+    # 2. Check USDT pair (e.g. BTCUSDT, TSLAUSDT)
+    if s.endswith("USDT"):
+        base = s.replace("USDT", "")
+        # If the base is a known crypto, use the crypto format
+        if base in crypto_map:
+            return crypto_map[base]
+        # Otherwise assume it's a stock
+        return base
+        
+    # 3. Check -USD format
+    if s.endswith("-USD"):
+        return s
+        
+    # 4. Default to generic (usually stock)
+    return s
 
 
 def get_real_fundamentals(symbol: str) -> Dict[str, Any]:

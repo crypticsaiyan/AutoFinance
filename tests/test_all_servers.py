@@ -16,6 +16,8 @@ TESTS = [
     "test_macro_server.py",
     "test_risk_server.py",
     "test_execution_server.py",
+    "test_simulation_server.py",
+    "test_notification_server.py",
 ]
 
 def run_test(test_file):

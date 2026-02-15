@@ -12,9 +12,84 @@ Tools:
 
 from mcp.server.fastmcp import FastMCP
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Union
 import math
+import json
+import ast
 
+def _parse_dict_arg(arg: Union[Dict, str]) -> Dict:
+    """Helper to robustly parse dictionary arguments that might be passed as strings"""
+    if isinstance(arg, dict):
+        return arg
+    if isinstance(arg, str):
+        try:
+            return json.loads(arg)
+        except:
+            try:
+                return ast.literal_eval(arg)
+            except:
+                pass
+    return {}
+
+# Default mock prices for hypothetical portfolios
+MOCK_PRICES = {
+    "BTC": 95000.0, "ETH": 2700.0, "SOL": 190.0, "BNB": 600.0,
+    "USDC": 1.0, "USDT": 1.0, "USD": 1.0,
+    "AAPL": 220.0, "MSFT": 410.0, "GOOG": 175.0,
+    "AMZN": 185.0, "NVDA": 130.0, "TSLA": 350.0, "META": 580.0
+}
+
+def _normalize_portfolio(portfolio: Dict[str, Any]) -> Dict[str, Any]:
+    """Ensure portfolio structure has valid numeric values"""
+    if not portfolio:
+        return {"cash": 0, "positions": {}, "total_value": 0}
+        
+    normalized = portfolio.copy()
+    raw_positions = normalized.get("positions", {})
+    normalized_positions = {}
+    
+    total_position_value = 0.0
+    
+    for symbol, data in raw_positions.items():
+        # Handle simple quantity input {"BTC": 1.5}
+        if isinstance(data, (int, float)):
+            quantity = float(data)
+            price = MOCK_PRICES.get(symbol.upper().replace("USDT",""), 100.0)
+            value = quantity * price
+            normalized_positions[symbol] = {
+                "quantity": quantity,
+                "current_price": price,
+                "current_value": value,
+                "avg_price": price * 0.9 # Mock cost basis
+            }
+            total_position_value += value
+        # Handle dict input
+        elif isinstance(data, dict):
+            qty = float(data.get("quantity", 0))
+            price = float(data.get("current_price", 0))
+            val = float(data.get("current_value", 0))
+            
+            # Recalculate value if missing
+            if val == 0 and qty > 0 and price > 0:
+                val = qty * price
+            elif val > 0 and price == 0:
+                price = val / qty if qty > 0 else 0
+                
+            normalized_positions[symbol] = {
+                "quantity": qty,
+                "current_price": price,
+                "current_value": val,
+                "avg_price": float(data.get("avg_price", 0))
+            }
+            total_position_value += val
+            
+    normalized["positions"] = normalized_positions
+    
+    # Recalculate total value
+    cash = float(normalized.get("cash", 0))
+    normalized["total_value"] = cash + total_position_value
+    
+    return normalized
 
 # Initialize MCP Server
 mcp = FastMCP("auto-finance-portfolio-analytics")
@@ -43,8 +118,9 @@ def calculate_portfolio_metrics(portfolio: Dict[str, Any]) -> Dict[str, Any]:
     
     # Calculate concentration (Herfindahl index)
     weights = []
+    denom = total_value if total_value > 0 else 1.0
     for pos in positions.values():
-        weight = pos.get("current_value", 0) / total_value
+        weight = pos.get("current_value", 0) / denom
         weights.append(weight)
     
     herfindahl = sum(w ** 2 for w in weights)
@@ -54,7 +130,7 @@ def calculate_portfolio_metrics(portfolio: Dict[str, Any]) -> Dict[str, Any]:
     diversification_score = (1.0 - herfindahl) if len(positions) > 1 else 0.0
     
     # Cash allocation
-    cash_allocation = cash / total_value if total_value > 0 else 0
+    cash_allocation = cash / denom
     
     return {
         "concentration_risk": round(concentration_risk, 3),
@@ -69,11 +145,12 @@ def identify_overexposure(portfolio: Dict[str, Any], threshold: float = 0.20) ->
     """Identify positions exceeding concentration threshold"""
     positions = portfolio.get("positions", {})
     total_value = portfolio.get("total_value", 100000)
+    denom = total_value if total_value > 0 else 1.0
     
     overexposed = []
     
     for symbol, pos in positions.items():
-        weight = pos.get("current_value", 0) / total_value
+        weight = pos.get("current_value", 0) / denom
         
         if weight > threshold:
             overexposed.append({
@@ -94,7 +171,7 @@ def generate_rebalancing_suggestions(
     """Generate rebalancing suggestions"""
     positions = portfolio.get("positions", {})
     total_value = portfolio.get("total_value", 100000)
-    cash = portfolio.get("cash", 0)
+    denom = total_value if total_value > 0 else 1.0
     
     suggestions = []
     
@@ -109,13 +186,18 @@ def generate_rebalancing_suggestions(
     # Calculate current vs target
     for symbol, target_weight in target_allocation.items():
         current_value = positions.get(symbol, {}).get("current_value", 0)
-        current_weight = current_value / total_value
+        current_weight = current_value / denom
         
         weight_diff = target_weight - current_weight
         value_diff = weight_diff * total_value
         
         if abs(value_diff) > total_value * 0.02:  # > 2% difference
             action = "BUY" if value_diff > 0 else "SELL"
+            
+            # Current price fallback
+            price = positions.get(symbol, {}).get("current_price", 
+                    MOCK_PRICES.get(symbol.upper().replace("USDT",""), 100.0))
+            if price == 0: price = 1.0 # Prevent div/0
             
             suggestions.append({
                 "symbol": symbol,
@@ -124,23 +206,27 @@ def generate_rebalancing_suggestions(
                 "target_weight": round(target_weight, 3),
                 "weight_diff": round(weight_diff, 3),
                 "value_change": round(abs(value_diff), 2),
-                "quantity": round(abs(value_diff) / positions.get(symbol, {}).get("current_price", 1), 4)
+                "quantity": round(abs(value_diff) / price, 4)
             })
     
     return suggestions
 
 
 @mcp.tool()
-def evaluate_portfolio(portfolio_state: Dict[str, Any] = None) -> Dict[str, Any]:
+def evaluate_portfolio(portfolio_state: Union[Dict[str, Any], str] = None) -> Dict[str, Any]:
     """
     Comprehensive portfolio evaluation and analysis.
     
     Args:
-        portfolio_state: Portfolio state (if None, fetches from execution server)
+        portfolio_state: Portfolio state (dict or JSON string)
     
     Returns:
         Metrics, analysis, and recommendations
     """
+    # Parse input if string
+    if portfolio_state and isinstance(portfolio_state, str):
+        portfolio_state = _parse_dict_arg(portfolio_state)
+
     # Check simulation mode
     if SIMULATION_MODE["enabled"] and SIMULATION_MODE["portfolio_data"]:
         return SIMULATION_MODE["portfolio_data"]
@@ -151,20 +237,13 @@ def evaluate_portfolio(portfolio_state: Dict[str, Any] = None) -> Dict[str, Any]
             "cash": 30000,
             "total_value": 100000,
             "positions": {
-                "BTCUSDT": {
-                    "quantity": 1.0,
-                    "avg_price": 45000,
-                    "current_price": 48000,
-                    "current_value": 48000
-                },
-                "ETHUSDT": {
-                    "quantity": 8.0,
-                    "avg_price": 2600,
-                    "current_price": 2800,
-                    "current_value": 22400
-                }
+                "BTCUSDT": 1.0,
+                "ETHUSDT": 8.0
             }
         }
+    
+    # Normalize (handle simplified inputs)
+    portfolio_state = _normalize_portfolio(portfolio_state)
     
     # Calculate metrics
     metrics = calculate_portfolio_metrics(portfolio_state)
@@ -241,8 +320,8 @@ def evaluate_portfolio(portfolio_state: Dict[str, Any] = None) -> Dict[str, Any]
 
 @mcp.tool()
 def calculate_rebalance_proposal(
-    portfolio_state: Dict[str, Any],
-    target_allocation: Dict[str, float]
+    portfolio_state: Union[Dict[str, Any], str],
+    target_allocation: Union[Dict[str, float], str]
 ) -> Dict[str, Any]:
     """
     Calculate detailed rebalance proposal.
@@ -251,11 +330,18 @@ def calculate_rebalance_proposal(
         portfolio_state: Current portfolio state
         target_allocation: Desired allocation {symbol: weight}
     """
+    portfolio_state = _parse_dict_arg(portfolio_state)
+    target_allocation = _parse_dict_arg(target_allocation)
+    
+    # Normalize portfolio first
+    portfolio_state = _normalize_portfolio(portfolio_state)
+    
     suggestions = generate_rebalancing_suggestions(portfolio_state, target_allocation)
     
     total_turnover = sum(abs(s["value_change"]) for s in suggestions)
     total_value = portfolio_state.get("total_value", 100000)
-    turnover_pct = total_turnover / total_value if total_value > 0 else 0
+    denom = total_value if total_value > 0 else 1.0
+    turnover_pct = total_turnover / denom
     
     # Group by action
     buys = [s for s in suggestions if s["action"] == "BUY"]
@@ -273,10 +359,12 @@ def calculate_rebalance_proposal(
 
 
 @mcp.tool()
-def get_allocation_summary(portfolio_state: Dict[str, Any] = None) -> Dict[str, Any]:
+def get_allocation_summary(portfolio_state: Union[Dict[str, Any], str] = None) -> Dict[str, Any]:
     """
     Get high-level allocation summary.
     """
+    if portfolio_state and isinstance(portfolio_state, str):
+        portfolio_state = _parse_dict_arg(portfolio_state)
     if not portfolio_state:
         portfolio_state = {
             "cash": 30000,
@@ -284,8 +372,12 @@ def get_allocation_summary(portfolio_state: Dict[str, Any] = None) -> Dict[str, 
             "positions": {}
         }
     
+    # Normalize first
+    portfolio_state = _normalize_portfolio(portfolio_state)
+    
     positions = portfolio_state.get("positions", {})
     total_value = portfolio_state.get("total_value", 100000)
+    denom = total_value if total_value > 0 else 1.0
     cash = portfolio_state.get("cash", 0)
     
     allocations = []
@@ -294,7 +386,7 @@ def get_allocation_summary(portfolio_state: Dict[str, Any] = None) -> Dict[str, 
     allocations.append({
         "asset": "CASH",
         "value": cash,
-        "weight": round(cash / total_value, 3) if total_value > 0 else 0
+        "weight": round(cash / denom, 3)
     })
     
     # Positions
@@ -302,7 +394,7 @@ def get_allocation_summary(portfolio_state: Dict[str, Any] = None) -> Dict[str, 
         allocations.append({
             "asset": symbol,
             "value": pos.get("current_value", 0),
-            "weight": round(pos.get("current_value", 0) / total_value, 3) if total_value > 0 else 0
+            "weight": round(pos.get("current_value", 0) / denom, 3)
         })
     
     # Sort by weight

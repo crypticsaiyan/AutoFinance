@@ -10,7 +10,7 @@ echo "=============================================="
 echo ""
 
 # Start each server in background
-for server in market risk execution compliance technical fundamental macro news portfolio-analytics volatility alert-engine simulation-engine notification-gateway
+for server in market risk execution compliance technical fundamental macro news portfolio-analytics volatility simulation-engine notification-gateway
     echo "  Starting $server..."
     $PYTHON $SCRIPT $server &
     sleep 1
@@ -30,11 +30,10 @@ echo "   macro:                 http://localhost:9007/mcp"
 echo "   news:                  http://localhost:9008/mcp"
 echo "   portfolio-analytics:   http://localhost:9009/mcp"
 echo "   volatility:            http://localhost:9010/mcp"
-echo "   alert-engine:          http://localhost:9011/mcp"
 echo "   simulation-engine:     http://localhost:9012/mcp"
-echo "   notification-gateway:  http://localhost:9013/mcp"
+echo "   notification-gateway:  http://localhost:9013/mcp  (includes alerts)"
 echo ""
 echo "🔗 Docker URLs (for Archestra):"
-echo "   Use: http://172.17.0.1:900X/mcp (where X = 1-13)"
+echo "   Use: http://172.17.0.1:900X/mcp"
 echo ""
 echo "🛑 To stop all servers: pkill -f mcp_sse_server.py"

@@ -32,30 +32,50 @@ if result:
 else:
     print("❌ FAILED"); exit(1)
 
-print("\n📰 Test 2: Analyze sentiment for AAPL...")
+print("\n📰 Test 2: Analyze sentiment for AAPL (LLM-powered)...")
 result = mcp.call("tools/call", {"name":"analyze_sentiment","arguments":{"symbol":"AAPL"}})
 if result and "result" in result:
     content = json.loads(result["result"]["content"][0]["text"])
     print(f"Symbol: {content.get('symbol')}, Sentiment: {content.get('sentiment')}, Score: {content.get('score')}")
+    print(f"Method: {content.get('analysis_method')}, Source: {content.get('source')}")
+    if content.get("news_items"):
+        item = content["news_items"][0]
+        print(f"Sample reasoning: {item.get('reasoning', 'N/A')[:80]}")
     print("✅ PASSED")
 else:
     print(f"❌ FAILED: {result}")
 
-print("\n📰 Test 3: Get news for BTCUSDT...")
+print("\n📰 Test 3: Get news for BTCUSDT (with LLM sentiment)...")
 result = mcp.call("tools/call", {"name":"get_news","arguments":{"symbol":"BTCUSDT","count":5}})
 if result and "result" in result:
     content = json.loads(result["result"]["content"][0]["text"])
-    print(f"News items: {len(content.get('news',[]))}")
-    if content.get('news'): print(f"Latest: {content['news'][0].get('title','')[:60]}...")
+    print(f"News items: {content.get('count')}")
+    if content.get('news_items'):
+        item = content['news_items'][0]
+        print(f"Latest: {item.get('headline','')[:60]}...")
+        print(f"Sentiment: {item.get('sentiment')}, Method: {item.get('method')}")
     print("✅ PASSED")
 else:
     print(f"❌ FAILED: {result}")
 
-print("\n📰 Test 4: Get market sentiment...")
+print("\n📰 Test 4: Get market sentiment (multi-symbol)...")
 result = mcp.call("tools/call", {"name":"get_market_sentiment","arguments":{"symbols":["AAPL","TSLA","MSFT"]}})
 if result and "result" in result:
     content = json.loads(result["result"]["content"][0]["text"])
-    print(f"Market: {content.get('market_sentiment')}, Avg: {content.get('average_score')}")
+    print(f"Market: {content.get('market_sentiment')}, Score: {content.get('market_score')}")
+    for sym in content.get("symbols", []):
+        print(f"  {sym['symbol']}: {sym['sentiment']} ({sym.get('method','unknown')})")
+    print("✅ PASSED")
+else:
+    print(f"❌ FAILED: {result}")
+
+print("\n📰 Test 5: Analyze custom headline (LLM)...")
+result = mcp.call("tools/call", {"name":"analyze_custom_headline","arguments":{"headline":"Tesla stock surges 15% on record earnings report"}})
+if result and "result" in result:
+    content = json.loads(result["result"]["content"][0]["text"])
+    print(f"Headline: {content.get('headline')[:50]}...")
+    print(f"Sentiment: {content.get('sentiment')}, Score: {content.get('score')}")
+    print(f"Method: {content.get('method')}, Reasoning: {content.get('reasoning','')[:80]}")
     print("✅ PASSED")
 else:
     print(f"❌ FAILED: {result}")
