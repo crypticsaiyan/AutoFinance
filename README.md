@@ -24,12 +24,15 @@
 <div align="center">
 
 ### TUI
-![TUI](assets/landi.png) 
+
+![TUI](assets/landi.png)
 
 ### Dashboard View
+
 ![Dashboard](assets/dashboard.png)
 
 ### Agent Orchestration
+
 ![Agents](assets/image.png)
 
 </div>
@@ -41,18 +44,18 @@
 AutoFinance is an **AI-powered financial control plane** that combines:
 
 ### Core Capabilities
-- 🔌 **14 Specialized MCP Servers** - Market data, technical analysis, risk management, execution, compliance, strategy allocation
+
+- 🔌 **13 Specialized MCP Servers** - Market data, technical analysis, risk management, execution, compliance, strategy allocation
 - 🤖 **12 AI Agents** - Hierarchical agent orchestration via Archestra
 - 📊 **Real Market Data** - Live Yahoo Finance integration (no mocks!)
 - 🛡️ **Production Governance** - Risk validation, audit logging, compliance tracking
 - 📢 **Multi-Channel Notifications** - Slack, WhatsApp, SMS, Email
-- 💼 **Smart Portfolio Allocation** - Automated 40% invest / 60% trade strategy (NEW!)
 
 ### Use Cases
+
 - 📈 Short-term trading with technical analysis
 - 💼 Long-term investing with fundamental research
 - 🎯 Portfolio management and rebalancing
-- ⚖️ Smart 40/60 allocation (investing/trading) with automatic drift monitoring
 - ⚠️ Risk assessment and position validation
 - 🔔 Price alerts and strategy simulations
 - 📝 Comprehensive audit trails for compliance
@@ -95,7 +98,8 @@ AutoFinance was developed extensively using **GitHub Copilot CLI**, showcasing a
 
 ## 🏗️ Architecture
 
-### MCP Servers (14)
+### MCP Servers (13)
+
 ```
 Port 9001: Market          - Real-time prices from Yahoo Finance
 Port 9002: Risk            - Trade validation and position limits
@@ -110,10 +114,10 @@ Port 9010: Volatility      - Historical volatility calculations (real data)
 Port 9011: Alert Engine    - Price alerts and monitors
 Port 9012: Simulation      - Monte Carlo "what-if" scenarios
 Port 9013: Notifications   - Multi-channel delivery
-Port 9014: Strategy Mgr    - 40% invest / 60% trade allocation (NEW!)
 ```
 
 ### Agent Hierarchy (12 Agents)
+
 ```
 Level 1: Portfolio Manager (CEO)
     ├── Level 2: Trading Director
@@ -133,52 +137,16 @@ Level 1: Portfolio Manager (CEO)
 
 ---
 
-## 💼 40% Invest / 60% Trade Strategy (NEW!)
-
-AutoFinance now includes a **Strategy Manager** that automatically maintains a balanced portfolio allocation:
-
-- **40% Long-Term Investing** - Quality stocks, fundamental analysis, buy & hold strategy
-- **60% Active Trading** - Technical signals, momentum plays, short-term gains
-
-### Key Features
-- ✅ **Automatic Drift Detection** - Monitors allocation and alerts when it exceeds 5% threshold
-- ✅ **Smart Rebalancing** - Coordinates fund transfers between investing and trading buckets
-- ✅ **Flexible Configuration** - Adjust allocations, thresholds, and risk profiles
-- ✅ **Integration Ready** - Works seamlessly with investor-supervisor and trader-supervisor
-
-### Quick Start
-```bash
-# Start with strategy manager included
-./start_sse_servers.sh
-
-# Or run the setup wizard
-./setup_strategy.sh
-```
-
-### Example Usage
-```
-User: "Show me my portfolio allocation"
-→ Strategy Manager shows: 42% investing, 58% trading (2% drift)
-
-User: "My trading bucket gained 15%, should we rebalance?"
-→ Strategy Manager proposes: Transfer $6,340 from trading to investing
-```
-
-**📖 Complete Documentation:**
-- [QUICK_START_STRATEGY.md](QUICK_START_STRATEGY.md) - Get started in 3 steps
-- [STRATEGY_GUIDE.md](STRATEGY_GUIDE.md) - Comprehensive guide with examples
-- [mcp-servers/strategy-manager/ARCHITECTURE.md](mcp-servers/strategy-manager/ARCHITECTURE.md) - Visual diagrams
-
----
-
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Python 3.14+
 - Docker (for Archestra)
 - Arch Linux with fish shell (or adapt commands for bash/zsh)
 
 ### 1. Install Dependencies
+
 ```bash
 cd AutoFinance
 . venv/bin/activate
@@ -188,19 +156,22 @@ pip install -r mcp-servers/requirements.txt
 Key packages: `mcp>=0.9.0`, `fastmcp>=0.2.0`, `yfinance>=1.1.0`
 
 ### 2. Start All MCP Servers
+
 ```bash
 ./start_sse_servers.sh
 ```
 
-This starts all 14 servers on ports 9001-9014. Each server uses Streamable HTTP transport on `/mcp` endpoint.
+This starts all 13 servers on ports 9001-9013. Each server uses Streamable HTTP transport on `/mcp` endpoint.
 
 **Verify servers are running:**
+
 ```bash
 ps aux | grep "mcp_sse_server.py" | grep -v grep | wc -l
-# Should return: 13 or 14
+# Should return: 13
 ```
 
 ### 3. Start Archestra
+
 ```bash
 # Archestra runs in Docker on localhost:3000
 docker ps | grep archestra
@@ -211,7 +182,7 @@ Access Archestra UI: http://localhost:3000
 
 ### 4. Configure MCP Servers in Archestra
 
-Go to **Archestra UI → MCP Registry** and add these 14 servers:
+Go to **Archestra UI → MCP Registry** and add these 13 servers:
 
 ```json
 {
@@ -254,9 +225,6 @@ Go to **Archestra UI → MCP Registry** and add these 14 servers:
     },
     "autofinance-notification-gateway": {
       "url": "http://172.17.0.1:9013/mcp"
-    },
-    "autofinance-strategy-manager": {
-      "url": "http://172.17.0.1:9014/mcp"
     }
   }
 }
@@ -269,6 +237,7 @@ Go to **Archestra UI → MCP Registry** and add these 14 servers:
 Follow the detailed instructions in [Agent_def.md](Agent_def.md) to create all 12 agents with proper system prompts and tool assignments.
 
 **Quick Agent Creation:**
+
 1. Go to **Agents → Create New**
 2. Copy Name and System Prompt from [Agent_def.md](Agent_def.md)
 3. Enable listed tools from MCP servers
@@ -282,6 +251,7 @@ Follow the detailed instructions in [Agent_def.md](Agent_def.md) to create all 1
 AutoFinance includes a beautiful, intuitive terminal-based interface for interactive trading and portfolio management.
 
 ### Features
+
 - 📊 **Live Charts** - Multiple stock/crypto charts with braille-dot graphics
 - 💬 **Copilot Chat** - Interactive AI chat with MCP tool access
 - 💼 **Portfolio Tracker** - Real-time portfolio value and P&L
@@ -289,6 +259,7 @@ AutoFinance includes a beautiful, intuitive terminal-based interface for interac
 - ⌨️ **Keyboard Navigation** - Intuitive shortcuts, no mouse required
 
 ### Quick Start
+
 ```bash
 cd cli
 ./install.sh      # Install dependencies
@@ -296,22 +267,25 @@ cd cli
 ```
 
 Or run directly:
+
 ```bash
 cd cli
 python main.py
 ```
 
 ### Keyboard Shortcuts
-| Key | Action |
-|-----|--------|
+
+| Key | Action      |
+| --- | ----------- |
 | `1` | Charts View |
 | `2` | Search View |
-| `3` | Chat View |
-| `H` | Help |
-| `R` | Refresh |
-| `Q` | Quit |
+| `3` | Chat View   |
+| `H` | Help        |
+| `R` | Refresh     |
+| `Q` | Quit        |
 
 ### Data Sources
+
 - **Binance** - Real-time crypto prices (WebSocket)
 - **Yahoo Finance** - Stock market data (polling)
 - Both sources work without API keys for public data
@@ -323,6 +297,7 @@ For complete TUI documentation, see [cli/CLI_README.md](cli/CLI_README.md)
 ## 🧪 Testing
 
 ### Run All Tests
+
 ```bash
 cd tests
 python test_all_servers.py
@@ -331,6 +306,7 @@ python test_all_servers.py
 This runs 8 comprehensive test scripts covering all major servers.
 
 ### Run Individual Tests
+
 ```bash
 cd tests
 python test_market_server.py       # Test real Yahoo Finance data
@@ -344,6 +320,7 @@ python test_execution_server.py    # Test portfolio execution
 ```
 
 ### Expected Test Results
+
 ```
 ✅ 100% Real Data:
 - AAPL: $255.78 (Yahoo Finance)
@@ -366,6 +343,7 @@ python test_execution_server.py    # Test portfolio execution
 ## 📊 Real Data Examples
 
 ### Market Data (Port 9001)
+
 ```python
 # Get live AAPL price
 → get_live_price("AAPL")
@@ -373,6 +351,7 @@ python test_execution_server.py    # Test portfolio execution
 ```
 
 ### Technical Analysis (Port 9005)
+
 ```python
 # Generate signal for Apple
 → generate_signal("AAPL", "3mo")
@@ -392,6 +371,7 @@ python test_execution_server.py    # Test portfolio execution
 ```
 
 ### Fundamental Analysis (Port 9006)
+
 ```python
 # Analyze Apple fundamentals
 → analyze_fundamentals("AAPL")
@@ -415,6 +395,7 @@ python test_execution_server.py    # Test portfolio execution
 ```
 
 ### Volatility Analysis (Port 9007)
+
 ```python
 # Check Bitcoin volatility
 → get_volatility_score("BTCUSDT")
@@ -433,6 +414,7 @@ python test_execution_server.py    # Test portfolio execution
 ## 🎭 Demo Scenarios
 
 ### Scenario 1: Trading Flow
+
 ```
 User → Portfolio Manager:
 "Should I buy 10 shares of Apple?"
@@ -461,6 +443,7 @@ Final result → User: "Trade executed. You now own 10 AAPL @ $255.78"
 ```
 
 ### Scenario 2: Investment Research
+
 ```
 User → Portfolio Manager:
 "Give me a long-term investment analysis for Microsoft"
@@ -487,6 +470,7 @@ Excellent fundamentals, significant upside, tech sector not overweight."
 ```
 
 ### Scenario 3: Price Alert
+
 ```
 User → Portfolio Manager:
 "Alert me when Bitcoin goes above $75,000"
@@ -515,18 +499,21 @@ Compliance Server → ✅ LOGGED
 ## 🔐 Security & Compliance
 
 ### Risk Management
+
 - **Position Limits:** Max 5% per position (configurable)
 - **Confidence Threshold:** Min 70% for trade approval
 - **Portfolio Risk Cap:** Max 30% total risk exposure
 - **Two-Phase Validation:** Pre-assessment + formal Risk server approval
 
 ### Compliance & Audit
+
 - **Event Logging:** All trades, validations, rejections logged
 - **Audit Trails:** Timestamped records with trade details
 - **Compliance Metrics:** Track validation rate, rejection reasons
 - **Report Generation:** On-demand audit reports
 
 ### Architecture Security
+
 - **Separation of Concerns:** Analysis agents can't execute trades
 - **Zero-Trust Model:** Every trade requires Risk server approval
 - **Agent Hierarchy:** Clear delegation paths, no rogue execution
@@ -537,6 +524,7 @@ Compliance Server → ✅ LOGGED
 ## 🛠️ Advanced Configuration
 
 ### Adding Real News API (NewsAPI.org)
+
 1. Sign up at https://newsapi.org/ (100 requests/day free)
 2. Get API key
 3. Set environment variable:
@@ -550,6 +538,7 @@ Compliance Server → ✅ LOGGED
    ```
 
 ### Adding Real Macro Data (FRED API)
+
 1. Sign up at https://fred.stlouisfed.org/ (unlimited free)
 2. Get API key
 3. Set environment variable:
@@ -563,7 +552,9 @@ Compliance Server → ✅ LOGGED
    ```
 
 ### Custom Risk Policies
+
 Edit [mcp-servers/risk/server.py](mcp-servers/risk/server.py):
+
 ```python
 RISK_POLICY = {
     "max_position_size_pct": 5.0,      # Change to 10.0 for aggressive
@@ -637,6 +628,7 @@ AutoFinance/
 ---
 
 ### Future Enhancements
+
 - 🎯 Add investor features (retirement planning, diversification scoring)
 - 📊 Integrate paid APIs (Bloomberg, Refinitiv) for institutional data
 - 🔄 Implement backtesting engine for strategy validation
@@ -654,36 +646,44 @@ AutoFinance/
 This project is optimized for GitHub Copilot CLI!
 
 ### 1. Custom Agents
+
 We have defined specialized agents in `AGENTS.md` to help you navigate the codebase:
+
 - **@Finance Expect**: Understands market data and trading strategies.
 - **@Test Runner**: Expert in our test suite.
 - **@Compliance Officer**: strict code reviewer for financial safety.
 
 Try:
+
 ```bash
 copilot
 > @Finance Expert analyze the risk of buying 100 AAPL shares
 ```
 
 ### 2. Project Context
+
 Copilot is context-aware thanks to `.github/copilot-instructions.md`, understanding our specific microservices architecture and avoiding hallucinations.
 
 ### 3. Local MCP Integration
+
 You can connect Copilot safely to your local MCP servers!
 Run the configuration helper:
+
 ```bash
 python configure_copilot.py
 ```
+
 This generates `copilot_mcp_config.json`. Add this to your `~/.copilot/mcp-config.json`.
 Then start Copilot and ask:
+
 ```bash
 copilot -p "What is the current price of Bitcoin?"
 ```
-Copilot will use the *real* local `market` server to fetch the data!
+
+Copilot will use the _real_ local `market` server to fetch the data!
 
 ---
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
