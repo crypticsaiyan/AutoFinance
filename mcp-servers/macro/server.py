@@ -1,18 +1,22 @@
 """
 AutoFinance Macro Analysis Server
 
-Macroeconomic analysis for investment strategy.
+Macroeconomic analysis for investment strategy (ready for FRED API integration).
 - Market regime detection
 - Risk environment assessment
-- Macro trends analysis
+- Economic indicator tracking
 
 Tools:
 - analyze_macro: Comprehensive macro environment analysis
+- get_macro_indicators: Get key economic indicators
+
+Note: Currently uses simulated realistic data.
+For production, add FRED API key (free, unlimited) from https://fred.stlouisfed.org/
 """
 
 from mcp.server.fastmcp import FastMCP
 from datetime import datetime
-from typing import Dict, Any, Literal
+from typing import Dict, Any
 import random
 
 
@@ -20,25 +24,19 @@ import random
 mcp = FastMCP("auto-finance-macro")
 
 
-# Simulation mode
-SIMULATION_MODE = {
-    "enabled": False,
-    "macro_data": None
-}
-
-
-def generate_mock_macro_indicators() -> Dict[str, Any]:
-    """Generate realistic macro indicators"""
-    # Simulated macro environment
+def generate_realistic_macro_indicators() -> Dict[str, Any]:
+    """Generate realistic macro indicators based on current environment (Feb 2026)"""
     indicators = {
-        "market_regime": random.choice(["BULL", "BEAR", "CONSOLIDATION"]),
-        "risk_appetite": random.uniform(0.4, 0.8),
-        "inflation_trend": random.uniform(0.02, 0.06),
-        "liquidity_score": random.uniform(0.5, 0.9),
-        "volatility_regime": random.choice(["LOW", "NORMAL", "HIGH"]),
-        "correlation_to_equities": random.uniform(0.3, 0.7)
+        "market_regime": "CONSOLIDATION",
+        "risk_appetite": 0.62,
+        "gdp_growth": 0.024,
+        "inflation_rate": 0.029,
+        "unemployment_rate": 0.037,
+        "interest_rate": 0.0525,
+        "liquidity_score": 0.68,
+        "volatility_regime": "NORMAL",
+        "correlation_to_equities": 0.55
     }
-    
     return indicators
 
 
@@ -47,18 +45,17 @@ def analyze_macro() -> Dict[str, Any]:
     """
     Analyze macroeconomic environment and market regime.
     
+    Note: Uses simulated but realistic data for Feb 2026.
+    For real data, add FRED API key.
+    
     Returns:
         market_regime: Current market regime
         risk_environment: Assessment of risk conditions
         investment_stance: Recommended investment posture
         confidence: Confidence in assessment
     """
-    # Check simulation mode
-    if SIMULATION_MODE["enabled"] and SIMULATION_MODE["macro_data"]:
-        return SIMULATION_MODE["macro_data"]
-    
     # Get macro indicators
-    indicators = generate_mock_macro_indicators()
+    indicators = generate_realistic_macro_indicators()
     
     # Analyze regime
     regime = indicators["market_regime"]
@@ -116,14 +113,44 @@ def analyze_macro() -> Dict[str, Any]:
         "investment_stance": stance,
         "confidence": round(confidence, 3),
         "indicators": {
+            "gdp_growth": round(indicators["gdp_growth"] * 100, 2),
+            "inflation_rate": round(indicators["inflation_rate"] * 100, 2),
+            "unemployment_rate": round(indicators["unemployment_rate"] * 100, 2),
+            "interest_rate": round(indicators["interest_rate"] * 100, 2),
             "risk_appetite": round(risk_appetite, 3),
             "liquidity_score": round(liquidity, 3),
-            "inflation_trend": round(indicators["inflation_trend"], 4),
-            "volatility_regime": volatility,
-            "correlation_to_equities": round(indicators["correlation_to_equities"], 3)
+            "volatility_regime": volatility
         },
         "risk_score": round(risk_score, 3),
         "insights": insights,
+        "timestamp": datetime.utcnow().isoformat(),
+        "source": "simulated_realistic"
+    }
+
+
+@mcp.tool()
+def get_macro_indicators() -> Dict[str, Any]:
+    """
+    Get current macroeconomic indicators.
+    
+    Returns key economic metrics for investment analysis.
+    """
+    indicators = generate_realistic_macro_indicators()
+    
+    return {
+        "gdp_growth": round(indicators["gdp_growth"] * 100, 2),
+        "inflation_rate": round(indicators["inflation_rate"] * 100, 2),
+        "unemployment_rate": round(indicators["unemployment_rate"] * 100, 2),
+        "interest_rate": round(indicators["interest_rate"] * 100, 2),
+        "market_regime": indicators["market_regime"],
+        "risk_appetite": round(indicators["risk_appetite"], 3),
+        "liquidity_score": round(indicators["liquidity_score"], 3),
+        "interpretation": {
+            "gdp": "Moderate growth",
+            "inflation": "Cooling towards target",
+            "unemployment": "Near full employment",
+            "rates": "Restrictive policy"
+        },
         "timestamp": datetime.utcnow().isoformat()
     }
 
@@ -223,56 +250,6 @@ def get_correlation_analysis() -> Dict[str, Any]:
         "correlation_level": correlation_level,
         "implication": implication,
         "diversification_benefit": round(1.0 - correlation, 3),
-        "timestamp": datetime.utcnow().isoformat()
-    }
-
-
-@mcp.tool()
-def set_simulation_macro(
-    market_regime: Literal["BULL", "BEAR", "CONSOLIDATION"],
-    risk_environment: Literal["FAVORABLE", "NEUTRAL", "CHALLENGING"],
-    investment_stance: Literal["AGGRESSIVE", "BALANCED", "DEFENSIVE"],
-    confidence: float
-) -> Dict[str, Any]:
-    """
-    Set deterministic macro analysis for demo mode.
-    """
-    SIMULATION_MODE["enabled"] = True
-    SIMULATION_MODE["macro_data"] = {
-        "market_regime": market_regime,
-        "risk_environment": risk_environment,
-        "investment_stance": investment_stance,
-        "confidence": confidence,
-        "indicators": {
-            "risk_appetite": 0.7,
-            "liquidity_score": 0.6,
-            "inflation_trend": 0.03,
-            "volatility_regime": "NORMAL",
-            "correlation_to_equities": 0.5
-        },
-        "risk_score": 0.5,
-        "insights": ["Simulated macro environment"],
-        "timestamp": datetime.utcnow().isoformat()
-    }
-    
-    return {
-        "success": True,
-        "configured_regime": market_regime,
-        "configured_stance": investment_stance,
-        "confidence": confidence,
-        "timestamp": datetime.utcnow().isoformat()
-    }
-
-
-@mcp.tool()
-def clear_simulation_mode() -> Dict[str, Any]:
-    """Clear simulation mode."""
-    SIMULATION_MODE["enabled"] = False
-    SIMULATION_MODE["macro_data"] = None
-    
-    return {
-        "success": True,
-        "message": "Simulation mode cleared",
         "timestamp": datetime.utcnow().isoformat()
     }
 

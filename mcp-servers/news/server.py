@@ -1,13 +1,17 @@
 """
 AutoFinance News Sentiment Server
 
-Deterministic keyword-based sentiment analysis.
+News sentiment analysis with keyword-based scoring (ready for NewsAPI integration).
 - News headline analysis
 - Sentiment scoring
 - Market sentiment aggregation
 
 Tools:
 - analyze_sentiment: Analyze news sentiment for a symbol
+- get_news: Get recent news headlines
+
+Note: Currently uses deterministic keyword-based analysis.
+For production, add NewsAPI.org key (100 requests/day free tier).
 """
 
 from mcp.server.fastmcp import FastMCP
@@ -18,13 +22,6 @@ import random
 
 # Initialize MCP Server
 mcp = FastMCP("auto-finance-news")
-
-
-# Simulation mode
-SIMULATION_MODE = {
-    "enabled": False,
-    "sentiments": {}  # {symbol: sentiment_data}
-}
 
 
 # Keyword-based sentiment scoring (deterministic)
@@ -101,16 +98,17 @@ def score_headline(headline: str) -> Dict[str, Any]:
 @mcp.tool()
 def analyze_sentiment(symbol: str) -> Dict[str, Any]:
     """
-    Analyze news sentiment for a symbol.
+    Analyze news sentiment for a symbol using keyword-based scoring.
     
-    Uses deterministic keyword-based scoring.
-    Returns aggregated sentiment with confidence.
+    Note: For real data, sign up at https://newsapi.org/ (100 requests/day free)
+    
+    Args:
+        symbol: Stock/crypto symbol
+    
+    Returns:
+        aggregated sentiment with confidence
     """
-    # Check simulation mode
-    if SIMULATION_MODE["enabled"] and symbol in SIMULATION_MODE["sentiments"]:
-        return SIMULATION_MODE["sentiments"][symbol]
-    
-    # Generate mock news
+    # Generate realistic mock news
     news_items = generate_mock_headlines(symbol, count=5)
     
     # Score each headline
@@ -148,6 +146,40 @@ def analyze_sentiment(symbol: str) -> Dict[str, Any]:
         "confidence": round(confidence, 3),
         "news_count": len(scored_news),
         "news_items": scored_news,
+        "timestamp": datetime.utcnow().isoformat(),
+        "source": "keyword_analysis"
+    }
+
+
+@mcp.tool()
+def get_news(symbol: str, count: int = 10) -> Dict[str, Any]:
+    """
+    Get recent news headlines for a symbol.
+    
+    Args:
+        symbol: Stock/crypto symbol
+        count: Number of headlines to return
+    
+    Returns:
+        List of news items with sentiment scores
+    """
+    news_items = generate_mock_headlines(symbol, count=count)
+    
+    scored_news = []
+    for item in news_items:
+        sentiment_data = score_headline(item["headline"])
+        scored_news.append({
+            "headline": item["headline"],
+            "timestamp": item["timestamp"],
+            "source": item["source"],
+            "sentiment": sentiment_data["sentiment"],
+            "score": sentiment_data["score"]
+        })
+    
+    return {
+        "symbol": symbol,
+        "news_items": scored_news,
+        "count": len(scored_news),
         "timestamp": datetime.utcnow().isoformat()
     }
 
@@ -201,64 +233,6 @@ def analyze_custom_headline(headline: str) -> Dict[str, Any]:
         "score": round(sentiment_data["score"], 3),
         "positive_signals": sentiment_data["positive_signals"],
         "negative_signals": sentiment_data["negative_signals"],
-        "timestamp": datetime.utcnow().isoformat()
-    }
-
-
-@mcp.tool()
-def set_simulation_sentiment(
-    symbol: str,
-    sentiment: str,
-    score: float,
-    confidence: float
-) -> Dict[str, Any]:
-    """
-    Set deterministic sentiment for demo mode.
-    
-    Args:
-        symbol: Trading pair
-        sentiment: POSITIVE, NEGATIVE, or NEUTRAL
-        score: 0.0 to 1.0
-        confidence: 0.0 to 1.0
-    """
-    SIMULATION_MODE["enabled"] = True
-    SIMULATION_MODE["sentiments"][symbol] = {
-        "symbol": symbol,
-        "sentiment": sentiment,
-        "score": score,
-        "confidence": confidence,
-        "news_count": 5,
-        "news_items": [
-            {
-                "headline": f"Simulated {sentiment.lower()} news for {symbol}",
-                "timestamp": datetime.utcnow().isoformat(),
-                "source": "Simulation",
-                "sentiment": sentiment,
-                "score": score
-            }
-        ],
-        "timestamp": datetime.utcnow().isoformat()
-    }
-    
-    return {
-        "success": True,
-        "symbol": symbol,
-        "configured_sentiment": sentiment,
-        "score": score,
-        "confidence": confidence,
-        "timestamp": datetime.utcnow().isoformat()
-    }
-
-
-@mcp.tool()
-def clear_simulation_mode() -> Dict[str, Any]:
-    """Clear simulation mode."""
-    SIMULATION_MODE["enabled"] = False
-    SIMULATION_MODE["sentiments"] = {}
-    
-    return {
-        "success": True,
-        "message": "Simulation mode cleared",
         "timestamp": datetime.utcnow().isoformat()
     }
 

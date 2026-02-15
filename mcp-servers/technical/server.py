@@ -1,36 +1,72 @@
 """
 AutoFinance Technical Analysis Server
 
-Technical indicator analysis and signal generation.
+Technical indicator analysis and signal generation using REAL market data.
 - SMA (Simple Moving Average)
 - RSI (Relative Strength Index)
+- MACD (Moving Average Convergence Divergence)
+- Bollinger Bands
 - Signal generation
 
 Tools:
 - generate_signal: Generate trading signal with confidence
+- calculate_rsi: Calculate RSI indicator
+- calculate_macd: Calculate MACD indicator
+- calculate_bollinger_bands: Calculate Bollinger Bands
 """
 
 from mcp.server.fastmcp import FastMCP
 from datetime import datetime
-from typing import Dict, Any, Literal
-import random
+from typing import Dict, Any, Literal, List
+import yfinance as yf
+import numpy as np
 
 
 # Initialize MCP Server
 mcp = FastMCP("auto-finance-technical")
 
 
-# Simulation mode for deterministic signals
-SIMULATION_MODE = {
-    "enabled": False,
-    "signals": {}  # {symbol: {signal, confidence}}
-}
+def _get_ticker_symbol(symbol: str) -> str:
+    """Convert symbol to Yahoo Finance format."""
+    crypto_map = {
+        "BTCUSDT": "BTC-USD",
+        "ETHUSDT": "ETH-USD",
+        "SOLUSDT": "SOL-USD",
+        "BNBUSDT": "BNB-USD",
+    }
+    return crypto_map.get(symbol, symbol)
+
+
+def get_real_historical_prices(symbol: str, period: str = "3mo", interval: str = "1d") -> List[float]:
+    """
+    Fetch real historical prices from Yahoo Finance.
+    
+    Args:
+        symbol: Trading symbol
+        period: Time period (1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max)
+        interval: Data interval (1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d, 5d, 1wk, 1mo, 3mo)
+    
+    Returns:
+        List of closing prices
+    """
+    try:
+        yf_symbol = _get_ticker_symbol(symbol)
+        ticker = yf.Ticker(yf_symbol)
+        hist = ticker.history(period=period, interval=interval)
+        
+        if hist.empty:
+            return []
+        
+        return hist['Close'].tolist()
+    except Exception as e:
+        print(f"Error fetching historical data for {symbol}: {e}")
+        return []
 
 
 def calculate_sma(prices: list, period: int = 20) -> float:
     """Calculate Simple Moving Average"""
     if len(prices) < period:
-        return sum(prices) / len(prices)
+        return sum(prices) / len(prices) if prices else 0
     return sum(prices[-period:]) / period
 
 
@@ -59,218 +95,389 @@ def calculate_rsi(prices: list, period: int = 14) -> float:
     return rsi
 
 
-def generate_mock_prices(base_price: float, count: int = 50) -> list:
-    """Generate mock price series for analysis"""
-    prices = [base_price]
+
+
+def calculate_ema(prices: list, period: int = 12) -> List[float]:
+    """Calculate Exponential Moving Average"""
+    if not prices or len(prices) < period:
+        return []
     
-    for _ in range(count - 1):
-        change = random.gauss(0, 0.02)
-        next_price = prices[-1] * (1 + change)
-        prices.append(next_price)
+    multiplier = 2 / (period + 1)
+    ema = [sum(prices[:period]) / period]  # Start with SMA
     
-    return prices
+    for price in prices[period:]:
+        ema.append((price - ema[-1]) * multiplier + ema[-1])
+    
+    return ema
+
+
+def calculate_macd(prices: list) -> Dict[str, float]:
+    """
+    Calculate MACD (Moving Average Convergence Divergence).
+    Returns MACD line, signal line, and histogram.
+    """
+    if len(prices) < 26:
+        return {"macd": 0, "signal": 0, "histogram": 0}
+    
+    ema_12 = calculate_ema(prices, 12)
+    ema_26 = calculate_ema(prices, 26)
+    
+    if not ema_12 or not ema_26:
+        return {"macd": 0, "signal": 0, "histogram": 0}
+    
+    # MACD line
+    macd_line = [ema_12[i + 14] - ema_26[i] for i in range(len(ema_26))]
+    
+    # Signal line (9-day EMA of MACD)
+    if len(macd_line) < 9:
+        return {"macd": macd_line[-1] if macd_line else 0, "signal": 0, "histogram": 0}
+    
+    signal_line = calculate_ema(macd_line, 9)
+    
+    macd_val = macd_line[-1]
+    signal_val = signal_line[-1] if signal_line else 0
+    histogram = macd_val - signal_val
+    
+    return {
+        "macd": round(macd_val, 2),
+        "signal": round(signal_val, 2),
+        "histogram": round(histogram, 2)
+    }
+
+
+def calculate_bollinger_bands(prices: list, period: int = 20, std_dev: int = 2) -> Dict[str, float]:
+    """Calculate Bollinger Bands"""
+    if len(prices) < period:
+        avg = sum(prices) / len(prices) if prices else 0
+        return {"upper": avg, "middle": avg, "lower": avg}
+    
+    recent_prices = prices[-period:]
+    sma = sum(recent_prices) / period
+    variance = sum((p - sma) ** 2 for p in recent_prices) / period
+    std = variance ** 0.5
+    
+    return {
+        "upper": round(sma + (std_dev * std), 2),
+        "middle": round(sma, 2),
+        "lower": round(sma - (std_dev * std), 2)
+    }
 
 
 @mcp.tool()
-def generate_signal(symbol: str, current_price: float) -> Dict[str, Any]:
+def generate_signal(symbol: str, timeframe: str = "3mo") -> Dict[str, Any]:
     """
-    Generate trading signal based on technical analysis.
+    Generate trading signal based on REAL technical analysis from Yahoo Finance.
     
-    Internally computes SMA, RSI, and other indicators.
-    Returns unified signal with confidence score.
+    Uses multiple indicators:
+    - SMA (20, 50, 200 day)
+    - RSI (14 period)
+    - MACD
+    - Bollinger Bands
     
     Args:
-        symbol: Trading pair symbol
-        current_price: Current market price
+        symbol: Trading symbol (e.g., 'AAPL', 'BTCUSDT')
+        timeframe: Analysis timeframe ('1mo', '3mo', '6mo', '1y')
     
     Returns:
         signal: BUY, SELL, or HOLD
         confidence: 0.0 to 1.0
-        indicators: Technical indicator values
+        indicators: All technical indicator values
+        reasons: List of reasons for the signal
     """
-    # Check simulation mode first
-    if SIMULATION_MODE["enabled"] and symbol in SIMULATION_MODE["signals"]:
-        sim_data = SIMULATION_MODE["signals"][symbol]
+    # Fetch REAL historical prices
+    prices = get_real_historical_prices(symbol, period=timeframe, interval="1d")
+    
+    if not prices or len(prices) < 50:
         return {
             "symbol": symbol,
-            "signal": sim_data["signal"],
-            "confidence": sim_data["confidence"],
-            "indicators": sim_data.get("indicators", {}),
-            "reason": sim_data.get("reason", "Simulated signal"),
-            "timestamp": datetime.utcnow().isoformat(),
-            "source": "simulation"
+            "signal": "HOLD",
+            "confidence": 0.0,
+            "error": "Insufficient historical data",
+            "timestamp": datetime.utcnow().isoformat()
         }
     
-    # Generate mock historical prices
-    prices = generate_mock_prices(current_price, count=50)
+    current_price = prices[-1]
     
-    # Calculate indicators
+    # Calculate ALL indicators
     sma_20 = calculate_sma(prices, period=20)
     sma_50 = calculate_sma(prices, period=50)
+    sma_200 = calculate_sma(prices, period=200) if len(prices) >= 200 else sma_50
     rsi = calculate_rsi(prices, period=14)
+    macd_data = calculate_macd(prices)
+    bb_data = calculate_bollinger_bands(prices, period=20)
     
-    # Generate signal based on indicators
+    # Collect indicator values
     indicators = {
+        "current_price": round(current_price, 2),
         "sma_20": round(sma_20, 2),
         "sma_50": round(sma_50, 2),
+        "sma_200": round(sma_200, 2),
         "rsi": round(rsi, 2),
-        "current_price": current_price
+        "macd": macd_data["macd"],
+        "macd_signal": macd_data["signal"],
+        "macd_histogram": macd_data["histogram"],
+        "bb_upper": bb_data["upper"],
+        "bb_middle": bb_data["middle"],
+        "bb_lower": bb_data["lower"]
     }
     
-    # Signal logic
-    signal = "HOLD"
-    confidence = 0.5
+    # Signal logic with multiple factors
+    buy_signals = 0
+    sell_signals = 0
     reasons = []
     
-    # RSI signals
+    # Trend analysis (Moving averages)
+    if current_price > sma_20 > sma_50:
+        buy_signals += 2
+        reasons.append("Strong uptrend (price > SMA20 > SMA50)")
+    elif current_price < sma_20 < sma_50:
+        sell_signals += 2
+        reasons.append("Strong downtrend (price < SMA20 < SMA50)")
+    
+    # RSI analysis
     if rsi < 30:
-        signal = "BUY"
-        reasons.append("RSI oversold")
-        confidence += 0.15
+        buy_signals += 2
+        reasons.append(f"Oversold RSI ({rsi:.1f})")
     elif rsi > 70:
+        sell_signals += 2
+        reasons.append(f"Overbought RSI ({rsi:.1f})")
+    elif 40 <= rsi <= 60:
+        reasons.append(f"Neutral RSI ({rsi:.1f})")
+    
+    # MACD analysis
+    if macd_data["histogram"] > 0 and macd_data["macd"] > macd_data["signal"]:
+        buy_signals += 1
+        reasons.append("Bullish MACD crossover")
+    elif macd_data["histogram"] < 0 and macd_data["macd"] < macd_data["signal"]:
+        sell_signals += 1
+        reasons.append("Bearish MACD crossover")
+    
+    # Bollinger Bands analysis
+    if current_price < bb_data["lower"]:
+        buy_signals += 1
+        reasons.append("Price below lower Bollinger Band (potential bounce)")
+    elif current_price > bb_data["upper"]:
+        sell_signals += 1
+        reasons.append("Price above upper Bollinger Band (potential reversal)")
+    
+    # Determine final signal
+    total_signals = buy_signals + sell_signals
+    
+    if buy_signals > sell_signals and buy_signals >= 3:
+        signal = "BUY"
+        confidence = min(buy_signals / 6.0, 1.0)  # Max 6 possible buy signals
+    elif sell_signals > buy_signals and sell_signals >= 3:
         signal = "SELL"
-        reasons.append("RSI overbought")
-        confidence += 0.15
-    
-    # SMA crossover signals
-    if current_price > sma_20 and sma_20 > sma_50:
-        if signal == "BUY" or signal == "HOLD":
-            signal = "BUY"
-            reasons.append("Bullish trend - price above SMAs")
-            confidence += 0.10
-    elif current_price < sma_20 and sma_20 < sma_50:
-        if signal == "SELL" or signal == "HOLD":
-            signal = "SELL"
-            reasons.append("Bearish trend - price below SMAs")
-            confidence += 0.10
-    
-    # Momentum signal
-    if current_price > sma_20:
-        reasons.append("Positive momentum")
-        if signal == "BUY":
-            confidence += 0.05
+        confidence = min(sell_signals / 6.0, 1.0)
     else:
-        reasons.append("Negative momentum")
-        if signal == "SELL":
-            confidence += 0.05
-    
-    # Normalize confidence
-    confidence = min(confidence, 0.95)
-    confidence = max(confidence, 0.40)
-    
-    reason = "; ".join(reasons) if reasons else "Neutral technical setup"
+        signal = "HOLD"
+        confidence = 0.3 + (abs(buy_signals - sell_signals) * 0.1)
+        reasons.append("Mixed signals - no clear direction")
     
     return {
         "symbol": symbol,
         "signal": signal,
-        "confidence": round(confidence, 3),
+        "confidence": round(confidence, 2),
         "indicators": indicators,
-        "reason": reason,
+        "reasons": reasons,
+        "buy_signals": buy_signals,
+        "sell_signals": sell_signals,
         "timestamp": datetime.utcnow().isoformat(),
-        "source": "technical_analysis"
+        "source": "yahoo_finance",
+        "data_points": len(prices)
     }
 
 
 @mcp.tool()
-def analyze_trend(symbol: str, current_price: float, timeframe: str = "short") -> Dict[str, Any]:
+def calculate_support_resistance(symbol: str, period: str = "6mo") -> Dict[str, Any]:
     """
-    Analyze price trend for a symbol.
+    Calculate support and resistance levels from REAL price data.
     
     Args:
-        timeframe: 'short' (20 period) or 'long' (50 period)
+        symbol: Trading symbol
+        period: Analysis period
+    
+    Returns:
+        Support and resistance levels with strength indicators
     """
-    prices = generate_mock_prices(current_price, count=50)
+    prices = get_real_historical_prices(symbol, period=period, interval="1d")
     
-    period = 20 if timeframe == "short" else 50
-    sma = calculate_sma(prices, period=period)
-    
-    trend = "BULLISH" if current_price > sma else "BEARISH"
-    strength = abs(current_price - sma) / sma
-    
-    return {
-        "symbol": symbol,
-        "trend": trend,
-        "strength": round(strength, 4),
-        "sma": round(sma, 2),
-        "current_price": current_price,
-        "timeframe": timeframe,
-        "timestamp": datetime.utcnow().isoformat()
-    }
-
-
-@mcp.tool()
-def get_support_resistance(symbol: str, current_price: float) -> Dict[str, Any]:
-    """
-    Calculate support and resistance levels.
-    """
-    prices = generate_mock_prices(current_price, count=50)
-    
-    # Simple support/resistance based on recent highs/lows
-    resistance = max(prices[-20:])
-    support = min(prices[-20:])
-    
-    return {
-        "symbol": symbol,
-        "support": round(support, 2),
-        "resistance": round(resistance, 2),
-        "current_price": current_price,
-        "distance_to_support": round((current_price - support) / current_price, 4),
-        "distance_to_resistance": round((resistance - current_price) / current_price, 4),
-        "timestamp": datetime.utcnow().isoformat()
-    }
-
-
-@mcp.tool()
-def set_simulation_signal(
-    symbol: str,
-    signal: Literal["BUY", "SELL", "HOLD"],
-    confidence: float,
-    reason: str = "Simulated"
-) -> Dict[str, Any]:
-    """
-    Set deterministic signal for demo mode.
-    
-    Args:
-        symbol: Trading pair
-        signal: BUY, SELL, or HOLD
-        confidence: 0.0 to 1.0
-        reason: Explanation
-    """
-    SIMULATION_MODE["enabled"] = True
-    SIMULATION_MODE["signals"][symbol] = {
-        "signal": signal,
-        "confidence": confidence,
-        "reason": reason,
-        "indicators": {
-            "sma_20": 0,
-            "sma_50": 0,
-            "rsi": 50
+    if not prices or len(prices) < 20:
+        return {
+            "error": "Insufficient data",
+            "symbol": symbol
         }
-    }
+    
+    # Find local maxima (resistance) and minima (support)
+    window = 5
+    resistance_levels = []
+    support_levels = []
+    
+    for i in range(window, len(prices) - window):
+        # Check if this is a local maximum
+        if all(prices[i] >= prices[i-j] for j in range(1, window+1)) and \
+           all(prices[i] >= prices[i+j] for j in range(1, window+1)):
+            resistance_levels.append(prices[i])
+        
+        # Check if this is a local minimum
+        if all(prices[i] <= prices[i-j] for j in range(1, window+1)) and \
+           all(prices[i] <= prices[i+j] for j in range(1, window+1)):
+            support_levels.append(prices[i])
+    
+    # Cluster similar levels
+    def cluster_levels(levels, tolerance=0.02):
+        if not levels:
+            return []
+        
+        clusters = []
+        sorted_levels = sorted(levels)
+        current_cluster = [sorted_levels[0]]
+        
+        for level in sorted_levels[1:]:
+            if abs(level - current_cluster[-1]) / current_cluster[-1] < tolerance:
+                current_cluster.append(level)
+            else:
+                clusters.append(sum(current_cluster) / len(current_cluster))
+                current_cluster = [level]
+        
+        if current_cluster:
+            clusters.append(sum(current_cluster) / len(current_cluster))
+        
+        return clusters
+    
+    support = cluster_levels(support_levels)[-3:] if support_levels else []
+    resistance = cluster_levels(resistance_levels)[-3:] if resistance_levels else []
+    
+    current_price = prices[-1]
     
     return {
-        "success": True,
         "symbol": symbol,
-        "configured_signal": signal,
-        "confidence": confidence,
+        "current_price": round(current_price, 2),
+        "support_levels": [round(s, 2) for s in sorted(support)],
+        "resistance_levels": [round(r, 2) for r in sorted(resistance, reverse=True)],
+        "nearest_support": round(max([s for s in support if s < current_price], default=0), 2),
+        "nearest_resistance": round(min([r for r in resistance if r > current_price], default=0), 2),
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+
+# Keep old tools for calculation
+@mcp.tool()
+def calculate_rsi_tool(symbol: str, period: int = 14) -> Dict[str, Any]:
+    """
+    Calculate RSI indicator from REAL market data.
+   
+    Args:
+        symbol: Trading symbol
+        period: RSI period (default 14)
+    
+    Returns:
+        RSI value and interpretation
+    """
+    prices = get_real_historical_prices(symbol, period="3mo", interval="1d")
+    
+    if not prices or len(prices) < period + 1:
+        return {"error": "Insufficient data", "symbol": symbol}
+    
+    rsi = calculate_rsi(prices, period)
+    
+    interpretation = "NEUTRAL"
+    if rsi < 30:
+        interpretation = "OVERSOLD"
+    elif rsi > 70:
+        interpretation = "OVERBOUGHT"
+    
+    return {
+        "symbol": symbol,
+        "rsi": round(rsi, 2),
+        "period": period,
+        "interpretation": interpretation,
         "timestamp": datetime.utcnow().isoformat()
     }
 
 
 @mcp.tool()
-def clear_simulation_mode() -> Dict[str, Any]:
+def calculate_macd_tool(symbol: str) -> Dict[str, Any]:
     """
-    Clear simulation mode and return to live analysis.
+    Calculate MACD indicator from REAL market data.
+    
+    Args:
+        symbol: Trading symbol
+    
+    Returns:
+        MACD line, signal line, and histogram
     """
-    SIMULATION_MODE["enabled"] = False
-    SIMULATION_MODE["signals"] = {}
+    prices = get_real_historical_prices(symbol, period="6mo", interval="1d")
+    
+    if not prices or len(prices) < 26:
+        return {"error": "Insufficient data", "symbol": symbol}
+    
+    macd_data = calculate_macd(prices)
+    
+    trend = "BULLISH" if macd_data["histogram"] > 0 else "BEARISH"
     
     return {
-        "success": True,
-        "message": "Simulation mode cleared",
+        "symbol": symbol,
+        "macd": macd_data["macd"],
+        "signal": macd_data["signal"],
+        "histogram": macd_data["histogram"],
+        "trend": trend,
         "timestamp": datetime.utcnow().isoformat()
     }
+
+
+@mcp.tool()
+def calculate_bollinger_bands_tool(symbol: str, period: int = 20) -> Dict[str, Any]:
+    """
+    Calculate Bollinger Bands from REAL market data.
+    
+    Args:
+        symbol: Trading symbol
+        period: Period for bands (default 20)
+    
+    Returns:
+        Upper, middle, and lower bands with price position
+    """
+    prices = get_real_historical_prices(symbol, period="3mo", interval="1d")
+    
+    if not prices or len(prices) < period:
+        return {"error": "Insufficient data", "symbol": symbol}
+    
+    bb_data = calculate_bollinger_bands(prices, period)
+    current_price = prices[-1]
+    
+    # Determine position
+    band_width = bb_data["upper"] - bb_data["lower"]
+    if band_width > 0:
+        position_pct = ((current_price - bb_data["lower"]) / band_width) * 100
+    else:
+        position_pct = 50
+    
+    position = "MIDDLE"
+    if position_pct < 20:
+        position = "LOWER_BAND"
+    elif position_pct > 80:
+        position = "UPPER_BAND"
+    
+    return {
+        "symbol": symbol,
+        "current_price": round(current_price, 2),
+        "upper_band": bb_data["upper"],
+        "middle_band": bb_data["middle"],
+        "lower_band": bb_data["lower"],
+        "position": position,
+        "position_percent": round(position_pct, 1),
+        "band_width": round(band_width, 2),
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+
+# Deprecated mock price generator - kept for backward compatibility
+def generate_mock_prices(base_price: float, count: int = 50) -> list:
+    """DEPRECATED: Use get_real_historical_prices() instead"""
+    return [base_price] * count
 
 
 if __name__ == "__main__":
     mcp.run()
+

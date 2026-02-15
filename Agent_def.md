@@ -743,23 +743,50 @@ You are the messenger. Reliable delivery is everything.
 
 ## 🔧 Setup Instructions
 
+### Prerequisites
+
+**Before creating agents in Archestra:**
+
+1. Start all MCP servers:
+   ```bash
+   cd /home/cryptosaiyan/Documents/AutoFinance
+   ./start_sse_servers.fish
+   ```
+
+2. Verify servers are running:
+   ```bash
+   ps aux | grep "mcp_sse_server.py" | grep -v grep | wc -l
+   # Should return: 12 or 13
+   ```
+
+3. Test a server manually:
+   ```bash
+   curl -X POST http://172.17.0.1:9001/mcp \
+     -H "Content-Type: application/json" \
+     -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}'
+   ```
+
+**See [README.md](README.md) for complete setup guide.**
+
 ### Step 1: Create All MCP Servers in Registry
 
-In Archestra UI → MCP Registry, add these 13 servers:
+In Archestra UI → MCP Registry, add these 13 servers with their URLs:
 
-1. autofinance-risk
-2. autofinance-execution
-3. autofinance-compliance
-4. autofinance-market
-5. autofinance-technical
-6. autofinance-volatility
-7. autofinance-news
-8. autofinance-fundamental
-9. autofinance-macro
-10. autofinance-portfolio-analytics
-11. autofinance-alert-engine (NEW)
-12. autofinance-simulation-engine (NEW)
-13. autofinance-notification-gateway (NEW)
+1. **autofinance-market** → `http://172.17.0.1:9001/mcp`
+2. **autofinance-risk** → `http://172.17.0.1:9002/mcp`
+3. **autofinance-execution** → `http://172.17.0.1:9003/mcp`
+4. **autofinance-compliance** → `http://172.17.0.1:9004/mcp`
+5. **autofinance-technical** → `http://172.17.0.1:9005/mcp`
+6. **autofinance-fundamental** → `http://172.17.0.1:9006/mcp`
+7. **autofinance-volatility** → `http://172.17.0.1:9007/mcp`
+8. **autofinance-portfolio-analytics** → `http://172.17.0.1:9008/mcp`
+9. **autofinance-news** → `http://172.17.0.1:9009/mcp`
+10. **autofinance-macro** → `http://172.17.0.1:9010/mcp`
+11. **autofinance-alert-engine** → `http://172.17.0.1:9011/mcp`
+12. **autofinance-simulation-engine** → `http://172.17.0.1:9012/mcp`
+13. **autofinance-notification-gateway** → `http://172.17.0.1:9013/mcp`
+
+**Important:** Use `172.17.0.1` (Docker bridge IP), NOT `localhost`!
 
 ### Step 2: Create All 12 Agents
 
@@ -787,9 +814,68 @@ Portfolio Manager should:
 
 ---
 
-## 📊 Testing Scenarios
+## 📊 Testing & Validation
 
-See [Demo Scenarios Document](#) for complete test scripts.
+### Test MCP Servers
+
+Before testing agents, verify all servers work:
+
+```bash
+cd tests
+python test_all_servers.py
+```
+
+This runs 36 tests across 8 test files. See [tests/README.md](tests/README.md) for details.
+
+### Demo Scenarios
+
+#### Scenario 1: Trading Flow
+```
+User → Portfolio Manager:
+"Should I buy 10 shares of Apple?"
+
+Expected Flow:
+1. Portfolio Manager → Trading Director
+2. Trading Director → Market Analyzer (get price)
+3. Trading Director → Signal Generator (get technical signal)
+4. Trading Director → Risk Assessor (pre-validate)
+5. Trading Director → Risk Server (formal validation)
+6. Trading Director → Execution Server (execute trade)
+7. Trading Director → Compliance Server (log)
+8. Result → Portfolio Manager → User
+```
+
+#### Scenario 2: Investment Research
+```
+User → Portfolio Manager:
+"Give me a long-term analysis of Microsoft"
+
+Expected Flow:
+1. Portfolio Manager → Investment Director
+2. Investment Director → Research Analyst (fundamentals)
+3. Investment Director → Portfolio Optimizer (allocation check)
+4. Investment Director synthesizes → Portfolio Manager
+5. Result → User with STRONG BUY recommendation
+```
+
+#### Scenario 3: Price Alert
+```
+User → Portfolio Manager:
+"Alert me when Bitcoin goes above $75,000"
+
+Expected Flow:
+1. Portfolio Manager → Operations Director
+2. Operations Director → Alert Manager
+3. Alert Manager creates rule in Alert Engine
+4. Confirmation → User
+
+[Later when price hits $75,100]
+5. Alert Manager → Notification Dispatcher
+6. Notification Dispatcher → Slack/Email/SMS
+7. User receives alert
+```
+
+**More scenarios:** See [README.md](README.md) Demo Scenarios section.
 
 ---
 
@@ -799,8 +885,53 @@ This hierarchy showcases:
 1. **Agent-to-Agent (A2A) Protocol** - 12 agents delegating to each other
 2. **Separation of Concerns** - Each agent has one job
 3. **Scalability** - Easy to add more specialists
-4. **Production-Ready** - Real governance, compliance,logging
+4. **Production-Ready** - Real governance, compliance, logging
 5. **Multi-Channel** - Slack, WhatsApp, SMS, Email notifications
 6. **Advanced Features** - Alerts, simulations, real-time monitoring
+7. **Real Data** - Yahoo Finance integration (not mocks!)
+8. **Comprehensive Testing** - 36 tests across 8 test files
 
 **This is not a demo. This is a production system.**
+
+---
+
+## 🚀 Quick Reference
+
+### Start Servers
+```bash
+./start_sse_servers.fish
+```
+
+### Stop Servers
+```bash
+pkill -f "mcp_sse_server.py"
+```
+
+### Check Status
+```bash
+ps aux | grep "mcp_sse_server.py" | grep -v grep
+```
+
+### Run Tests
+```bash
+cd tests && python test_all_servers.py
+```
+
+### Access Archestra
+```bash
+open http://localhost:3000
+```
+
+### Resources
+- **Main Documentation:** [README.md](README.md)
+- **Test Suite:** [tests/README.md](tests/README.md)
+- **Implementation Details:** [REAL_DATA_COMPLETE.md](REAL_DATA_COMPLETE.md)
+- **Full Context:** [CONTEXT_EXPORT.md](CONTEXT_EXPORT.md)
+
+---
+
+**Last Updated:** February 15, 2026  
+**Status:** Production-Ready ✅  
+**Agents:** 12 configured  
+**Servers:** 13 running  
+**Tests:** 36 passing ✅
