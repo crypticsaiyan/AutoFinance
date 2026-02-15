@@ -1,0 +1,350 @@
+
+================================================================================
+Port 9002: auto-finance-risk
+================================================================================
+
+  Tool: validate_trade
+  Description: 
+Validate a trade proposal against risk policy.
+
+Returns approval status with reason.
+
+  Parameters:
+    - symbol (required): string - 
+    - action (required): string - 
+    - quantity (required): number - 
+    - price (required): number - 
+    - confidence (required): number - 
+    - volatility (required): number - 
+    - position_size_pct (required): number - 
+    - trade_value (required): number - 
+
+  Tool: validate_rebalance
+  Description: 
+Validate a portfolio rebalance proposal.
+
+Args:
+    changes: List of dicts with {symbol, action, quantity, value}
+    total_value: Total portfolio value
+    max_turnover_pct: Maximum allowed turnover percentage
+
+  Parameters:
+    - changes (required): array - 
+    - total_value (required): number - 
+    - max_turnover_pct (required): number - 
+
+  Tool: get_risk_policy
+  Description: 
+Return current risk policy configuration.
+Useful for transparency and debugging.
+
+
+================================================================================
+Port 9003: auto-finance-execution
+================================================================================
+
+  Tool: execute_trade
+  Description: 
+Execute an approved trade.
+
+CRITICAL: Only executes if approved=True in risk validation.
+
+  Parameters:
+    - trade_id (required): string - 
+    - symbol (required): string - 
+    - action (required): string - 
+    - quantity (required): number - 
+    - price (required): number - 
+    - approved (required): boolean - 
+    - risk_validation (required): object - 
+
+  Tool: apply_rebalance
+  Description: 
+Apply an approved portfolio rebalance.
+
+Args:
+    changes: List of {symbol, action, quantity, price, value}
+
+  Parameters:
+    - rebalance_id (required): string - 
+    - changes (required): array - 
+    - approved (required): boolean - 
+    - risk_validation (required): object - 
+
+  Tool: get_portfolio_state
+  Description: 
+Get current portfolio state (read-only).
+
+Returns cash, positions, and portfolio metrics.
+
+
+  Tool: update_position_prices
+  Description: 
+Update current prices for positions (mark-to-market).
+
+Args:
+    price_updates: {symbol: current_price}
+
+  Parameters:
+    - price_updates (required): object - 
+
+  Tool: reset_portfolio
+  Description: 
+Reset portfolio to initial state (for testing/demo).
+
+  Parameters:
+    - initial_cash: number - 
+
+================================================================================
+Port 9005: auto-finance-technical
+================================================================================
+
+  Tool: generate_signal
+  Description: 
+Generate trading signal based on REAL technical analysis from Yahoo Finance.
+
+Uses multiple indicators:
+- SMA (20, 50, 200 day)
+- RSI (14 period)
+- MACD
+- Bollinger Bands
+
+Args:
+    symbol: Trading symbol (e.g., 'AAPL', 'BTCUSDT')
+    timeframe: Analysis timeframe ('1mo', '3mo', '6mo', '1y')
+
+Returns:
+    signal: BUY, SELL, or HOLD
+    confidence: 0.0 to 1.0
+    indicators: All technical indicator values
+    reasons: List of reasons for the signal
+
+  Parameters:
+    - symbol (required): string - 
+    - timeframe: string - 
+
+  Tool: calculate_support_resistance
+  Description: 
+Calculate support and resistance levels from REAL price data.
+
+Args:
+    symbol: Trading symbol
+    period: Analysis period
+
+Returns:
+    Support and resistance levels with strength indicators
+
+  Parameters:
+    - symbol (required): string - 
+    - period: string - 
+
+  Tool: calculate_rsi_tool
+  Description: 
+Calculate RSI indicator from REAL market data.
+
+Args:
+    symbol: Trading symbol
+    period: RSI period (default 14)
+
+Returns:
+    RSI value and interpretation
+
+  Parameters:
+    - symbol (required): string - 
+    - period: integer - 
+
+  Tool: calculate_macd_tool
+  Description: 
+Calculate MACD indicator from REAL market data.
+
+Args:
+    symbol: Trading symbol
+
+Returns:
+    MACD line, signal line, and histogram
+
+  Parameters:
+    - symbol (required): string - 
+
+  Tool: calculate_bollinger_bands_tool
+  Description: 
+Calculate Bollinger Bands from REAL market data.
+
+Args:
+    symbol: Trading symbol
+    period: Period for bands (default 20)
+
+Returns:
+    Upper, middle, and lower bands with price position
+
+  Parameters:
+    - symbol (required): string - 
+    - period: integer - 
+
+================================================================================
+Port 9006: auto-finance-fundamental
+================================================================================
+
+  Tool: analyze_fundamentals
+  Description: 
+Perform comprehensive fundamental analysis using REAL data from Yahoo Finance.
+
+Args:
+    symbol: Stock symbol (e.g., 'AAPL', 'MSFT')
+
+Returns:
+    valuation_score: 0-1, investment value opportunity
+    quality_score: 0-1, company quality
+    growth_score: 0-1, growth potential
+    recommendation: BUY, HOLD, SELL based on analyst consensus
+
+  Parameters:
+    - symbol (required): string - 
+
+  Tool: get_company_overview
+  Description: 
+Get detailed company overview from REAL data.
+
+Args:
+    symbol: Stock symbol
+
+Returns:
+    Comprehensive company information
+
+  Parameters:
+    - symbol (required): string - 
+
+  Tool: compare_fundamentals
+  Description: 
+Compare fundamental metrics across multiple stocks using REAL data.
+
+Args:
+    symbols: List of stock symbols to compare
+
+Returns:
+    Comparison data with rankings
+
+  Parameters:
+    - symbols (required): array - 
+
+  Tool: get_investment_thesis
+  Description: 
+Generate investment thesis from REAL fundamental data.
+
+Args:
+    symbol: Stock symbol
+
+Returns:
+    Investment thesis with strengths, weaknesses, and outlook
+
+  Parameters:
+    - symbol (required): string - 
+
+================================================================================
+Port 9009: auto-finance-portfolio-analytics
+================================================================================
+
+  Tool: evaluate_portfolio
+  Description: 
+Comprehensive portfolio evaluation and analysis.
+
+Args:
+    portfolio_state: Portfolio state (if None, fetches from execution server)
+
+Returns:
+    Metrics, analysis, and recommendations
+
+  Parameters:
+    - portfolio_state: object - 
+
+  Tool: calculate_rebalance_proposal
+  Description: 
+Calculate detailed rebalance proposal.
+
+Args:
+    portfolio_state: Current portfolio state
+    target_allocation: Desired allocation {symbol: weight}
+
+  Parameters:
+    - portfolio_state (required): object - 
+    - target_allocation (required): object - 
+
+  Tool: get_allocation_summary
+  Description: 
+Get high-level allocation summary.
+
+  Parameters:
+    - portfolio_state: object - 
+
+  Tool: set_simulation_portfolio
+  Description: 
+Set deterministic portfolio evaluation for demo mode.
+
+  Parameters:
+    - health_rating (required): string - 
+    - health_score (required): number - 
+    - rebalancing_needed (required): boolean - 
+
+  Tool: clear_simulation_mode
+  Description: Clear simulation mode.
+
+================================================================================
+Port 9010: auto-finance-volatility
+================================================================================
+
+  Tool: calculate_historical_volatility
+  Description: 
+Calculate historical volatility from REAL market data.
+
+Args:
+    symbol: Trading symbol (e.g., 'AAPL', 'BTCUSDT')
+    period: Time period for analysis ('1mo', '3mo', '6mo', '1y')
+
+Returns:
+    Annualized volatility and multiple timeframe analysis
+
+  Parameters:
+    - symbol (required): string - 
+    - period: string - 
+
+  Tool: detect_volatility_regime
+  Description: 
+Detect current volatility regime (LOW, NORMAL, HIGH) from REAL data.
+
+Args:
+    symbol: Trading symbol
+
+Returns:
+    Current regime and historical context
+
+  Parameters:
+    - symbol (required): string - 
+
+  Tool: get_volatility_score
+  Description: 
+Get comprehensive volatility assessment with risk scoring from REAL data.
+
+Args:
+    symbol: Trading symbol
+
+Returns:
+    volatility: Annualized volatility percentage
+    risk_level: LOW, MEDIUM, HIGH
+    regime: Current volatility regime
+    score: 0-1 risk score
+
+  Parameters:
+    - symbol (required): string - 
+
+  Tool: compare_volatility
+  Description: 
+Compare volatility across multiple symbols using REAL data.
+
+Args:
+    symbols: List of trading symbols to compare
+
+Returns:
+    Comparison data with rankings
+
+  Parameters:
+    - symbols (required): array - 

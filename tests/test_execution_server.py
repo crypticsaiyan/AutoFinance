@@ -1,129 +1,94 @@
-"""
-Test script for Execution Server
-Port: 9003
-"""
-
-import requests
-import json
+"""Test script for Execution Server - Port: 9003"""
+import requests, json
 
 BASE_URL = "http://172.17.0.1:9003/mcp"
 
-def make_mcp_call(method, params=None):
-    """Make an MCP protocol call"""
-    payload = {
-        "jsonrpc": "2.0",
-        "id": 1,
-        "method": method,
-        "params": params or {}
-    }
+class MCPSession:
+    def __init__(self, base_url):
+        self.base_url, self.session, self.session_id, self.message_id = base_url, requests.Session(), None, 0
     
-    headers = {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-    }
+    def parse_sse_response(self, response):
+        if 'mcp-session-id' in response.headers: self.session_id = response.headers['mcp-session-id']
+        for line in response.text.strip().split('\n'):
+            if line.startswith('data: '): return json.loads(line[6:])
+        return None
     
-    response = requests.post(BASE_URL, json=payload, headers=headers)
-    return response.json()
+    def call(self, method, params=None):
+        self.message_id += 1
+        headers = {"Content-Type": "application/json", "Accept": "application/json, text/event-stream"}
+        if self.session_id: headers["mcp-session-id"] = self.session_id
+        return self.parse_sse_response(self.session.post(self.base_url, json={"jsonrpc":"2.0","id":self.message_id,"method":method,"params":params or {}}, headers=headers))
+    
+    def initialize(self):
+        return self.call("initialize", {"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}})
 
-print("=" * 80)
-print("Testing Execution Server (Port 9003)")
-print("=" * 80)
+print("="*80 + "\nTesting Execution Server (Port 9003)\n" + "="*80)
+mcp = MCPSession(BASE_URL)
 
-# Test 1: Initialize
-print("\n💼 Test 1: Initialize MCP session...")
-result = make_mcp_call("initialize", {
-    "protocolVersion": "2024-11-05",
-    "capabilities": {},
-    "clientInfo": {"name": "test", "version": "1.0"}
-})
-print(f"✅ Initialized: {result.get('result', {}).get('serverInfo', {}).get('name')}")
-
-# Test 2: Get portfolio state (initial)
-print("\n💼 Test 2: Get initial portfolio state...")
-result = make_mcp_call("tools/call", {
-    "name": "get_portfolio_state",
-    "arguments": {}
-})
-if "result" in result:
-    content = json.loads(result["result"]["content"][0]["text"])
-    print(f"Cash balance: ${content.get('cash', 'N/A'):,.2f}")
-    print(f"Total value: ${content.get('total_value', 'N/A'):,.2f}")
-    print(f"Positions: {len(content.get('positions', []))}")
-    print("✅ Portfolio state test PASSED")
+print("\n💼 Test 1: Initialize...")
+result = mcp.initialize()
+if result:
+    print(f"✅ Initialized: {result.get('result',{}).get('serverInfo',{}).get('name')}")
 else:
-    print("❌ Test FAILED:", result)
+    print("❌ FAILED"); exit(1)
 
-# Test 3: Execute trade (BUY)
-print("\n💼 Test 3: Execute BUY trade for AAPL...")
-result = make_mcp_call("tools/call", {
-    "name": "execute_trade",
-    "arguments": {
-        "symbol": "AAPL",
-        "side": "BUY",
-        "quantity": 10,
-        "price": 250.0
-    }
-})
-if "result" in result:
-    content = json.loads(result["result"]["content"][0]["text"])
-    print(f"Status: {content.get('status', 'N/A')}")
-    print(f"Order ID: {content.get('order_id', 'N/A')}")
-    print(f"Total cost: ${content.get('total_cost', 'N/A'):,.2f}")
-    print("✅ BUY trade execution PASSED")
+print("\n💼 Test 2: Reset portfolio...")
+result = mcp.call("tools/call", {"name":"reset_portfolio","arguments":{"initial_cash":100000}})
+if result and "result" in result:
+    print("✅ Portfolio reset to $100,000")
 else:
-    print("❌ Test FAILED:", result)
+    print(f"❌ FAILED: {result}")
 
-# Test 4: Get portfolio state (after buy)
-print("\n💼 Test 4: Get portfolio state after BUY...")
-result = make_mcp_call("tools/call", {
-    "name": "get_portfolio_state",
-    "arguments": {}
-})
-if "result" in result:
+print("\n💼 Test 3: Get portfolio state...")
+result = mcp.call("tools/call", {"name":"get_portfolio_state","arguments":{}})
+if result and "result" in result:
     content = json.loads(result["result"]["content"][0]["text"])
-    print(f"Cash balance: ${content.get('cash', 'N/A'):,.2f}")
-    print(f"Positions: {len(content.get('positions', []))}")
-    if content.get("positions"):
-        for pos in content["positions"]:
-            print(f"  - {pos['symbol']}: {pos['quantity']} shares @ ${pos['avg_price']}")
-    print("✅ Post-trade portfolio state PASSED")
+    print(f"Cash: ${content.get('cash',0):,.2f}, Total Value: ${content.get('total_value',0):,.2f}, Positions: {len(content.get('positions',{}))}")
+    print("✅ PASSED")
 else:
-    print("❌ Test FAILED:", result)
+    print(f"❌ FAILED: {result}")
 
-# Test 5: Execute trade (SELL)
-print("\n💼 Test 5: Execute SELL trade for AAPL...")
-result = make_mcp_call("tools/call", {
-    "name": "execute_trade",
-    "arguments": {
-        "symbol": "AAPL",
-        "side": "SELL",
-        "quantity": 5,
-        "price": 255.0
-    }
-})
-if "result" in result:
+print("\n💼 Test 4: Execute BUY trade for AAPL...")
+result = mcp.call("tools/call", {"name":"execute_trade","arguments":{
+    "trade_id":"test_001",
+    "symbol":"AAPL",
+    "action":"BUY",
+    "quantity":10,
+    "price":250.0,
+    "approved":True,
+    "risk_validation":{"approved":True,"risk_level":"LOW"}
+}})
+if result and "result" in result:
     content = json.loads(result["result"]["content"][0]["text"])
-    print(f"Status: {content.get('status', 'N/A')}")
-    print(f"Total proceeds: ${content.get('total_proceeds', 'N/A'):,.2f}")
-    print("✅ SELL trade execution PASSED")
+    print(f"Status: {content.get('status')}, Symbol: {content.get('symbol')}, Quantity: {content.get('quantity')}")
+    print("✅ PASSED")
 else:
-    print("❌ Test FAILED:", result)
+    print(f"❌ FAILED: {result}")
 
-# Test 6: Get trade history
-print("\n💼 Test 6: Get trade history...")
-result = make_mcp_call("tools/call", {
-    "name": "get_trade_history",
-    "arguments": {"limit": 5}
-})
-if "result" in result:
+print("\n💼 Test 5: Update position prices...")
+result = mcp.call("tools/call", {"name":"update_position_prices","arguments":{"price_updates":{"AAPL":255.0}}})
+if result and "result" in result:
     content = json.loads(result["result"]["content"][0]["text"])
-    print(f"Total trades: {len(content.get('trades', []))}")
-    for trade in content.get("trades", [])[:3]:
-        print(f"  - {trade['symbol']} {trade['side']} {trade['quantity']} @ ${trade['price']}")
-    print("✅ Trade history test PASSED")
+    print(f"Prices updated: {len(content.get('updated',{}))}")
+    print("✅ PASSED")
 else:
-    print("❌ Test FAILED:", result)
+    print(f"❌ FAILED: {result}")
 
-print("\n" + "=" * 80)
-print("Execution Server Testing Complete!")
-print("=" * 80)
+print("\n💼 Test 6: Execute SELL trade...")
+result = mcp.call("tools/call", {"name":"execute_trade","arguments":{
+    "trade_id":"test_002",
+    "symbol":"AAPL",
+    "action":"SELL",
+    "quantity":5,
+    "price":255.0,
+    "approved":True,
+    "risk_validation":{"approved":True,"risk_level":"LOW"}
+}})
+if result and "result" in result:
+    content = json.loads(result["result"]["content"][0]["text"])
+    print(f"Status: {content.get('status')}, Quantity: {content.get('quantity')}")
+    print("✅ PASSED")
+else:
+    print(f"❌ FAILED: {result}")
+
+print("\n" + "="*80 + "\nExecution Server Testing Complete!\n" + "="*80)

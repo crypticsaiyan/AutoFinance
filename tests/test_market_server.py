@@ -8,52 +8,78 @@ import json
 
 BASE_URL = "http://172.17.0.1:9001/mcp"
 
-def make_mcp_call(method, params=None):
-    """Make an MCP protocol call"""
-    payload = {
-        "jsonrpc": "2.0",
-        "id": 1,
-        "method": method,
-        "params": params or {}
-    }
+class MCPSession:
+    """MCP session manager with SSE support"""
+    def __init__(self, base_url):
+        self.base_url = base_url
+        self.session = requests.Session()
+        self.session_id = None
+        self.message_id = 0
+        
+    def parse_sse_response(self, response):
+        """Parse Server-Sent Events (SSE) response"""
+        # Extract session ID from headers if present
+        if 'mcp-session-id' in response.headers:
+            self.session_id = response.headers['mcp-session-id']
+            
+        lines = response.text.strip().split('\n')
+        for line in lines:
+            if line.startswith('data: '):
+                return json.loads(line[6:])
+        return None
     
-    headers = {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-    }
+    def call(self, method, params=None):
+        """Make an MCP protocol call"""
+        self.message_id += 1
+        payload = {
+            "jsonrpc": "2.0",
+            "id": self.message_id,
+            "method": method,
+            "params": params or {}
+        }
+        
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json, text/event-stream"
+        }
+        
+        if self.session_id:
+            headers["mcp-session-id"] = self.session_id
+        
+        response = self.session.post(self.base_url, json=payload, headers=headers)
+        return self.parse_sse_response(response)
     
-    response = requests.post(BASE_URL, json=payload, headers=headers)
-    return response.json()
-
-def format_dict(d, indent=2):
-    """Format dictionary for readable output"""
-    for key, value in d.items():
-        if isinstance(value, dict):
-            print(f"{' ' * indent}{key}:")
-            format_dict(value, indent + 2)
-        else:
-            print(f"{' ' * indent}{key}: {value}")
+    def initialize(self):
+        """Initialize MCP session"""
+        return self.call("initialize", {
+            "protocolVersion": "2024-11-05",
+            "capabilities": {},
+            "clientInfo": {"name": "test", "version": "1.0"}
+        })
 
 print("=" * 80)
 print("Testing Market Server (Port 9001)")
 print("=" * 80)
 
+# Create session
+mcp = MCPSession(BASE_URL)
+
 # Test 1: Initialize
 print("\n📊 Test 1: Initialize MCP session...")
-result = make_mcp_call("initialize", {
-    "protocolVersion": "2024-11-05",
-    "capabilities": {},
-    "clientInfo": {"name": "test", "version": "1.0"}
-})
-print(f"✅ Initialized: {result.get('result', {}).get('serverInfo', {}).get('name')}")
+result = mcp.initialize()
+if result:
+    print(f"✅ Initialized: {result.get('result', {}).get('serverInfo', {}).get('name')}")
+else:
+    print("❌ Initialization FAILED")
+    exit(1)
 
 # Test 2: Get live price
 print("\n📊 Test 2: Get live price for AAPL...")
-result = make_mcp_call("tools/call", {
+result = mcp.call("tools/call", {
     "name": "get_live_price",
     "arguments": {"symbol": "AAPL"}
 })
-if "result" in result:
+if result and "result" in result:
     content = json.loads(result["result"]["content"][0]["text"])
     print("symbol:", content["symbol"])
     print("price: $" + str(content["price"]))
@@ -64,11 +90,11 @@ else:
 
 # Test 3: Get market overview
 print("\n📊 Test 3: Get market overview...")
-result = make_mcp_call("tools/call", {
+result = mcp.call("tools/call", {
     "name": "get_market_overview",
     "arguments": {}
 })
-if "result" in result:
+if result and "result" in result:
     content = json.loads(result["result"]["content"][0]["text"])
     print(f"Markets tracked: {len(content.get('markets', []))}")
     for market in content.get("markets", [])[:3]:
@@ -79,7 +105,7 @@ else:
 
 # Test 4: Get candles
 print("\n📊 Test 4: Get candle data for BTCUSDT...")
-result = make_mcp_call("tools/call", {
+result = mcp.call("tools/call", {
     "name": "get_candles",
     "arguments": {
         "symbol": "BTCUSDT",
@@ -87,7 +113,7 @@ result = make_mcp_call("tools/call", {
         "count": 5
     }
 })
-if "result" in result:
+if result and "result" in result:
     content = json.loads(result["result"]["content"][0]["text"])
     print(f"Candles returned: {len(content.get('candles', []))}")
     if content.get("candles"):
@@ -99,11 +125,11 @@ else:
 
 # Test 5: Calculate volatility
 print("\n📊 Test 5: Calculate volatility for TSLA...")
-result = make_mcp_call("tools/call", {
+result = mcp.call("tools/call", {
     "name": "calculate_volatility",
     "arguments": {"symbol": "TSLA"}
 })
-if "result" in result:
+if result and "result" in result:
     content = json.loads(result["result"]["content"][0]["text"])
     print(f"30-day volatility: {content.get('volatility_30d', 'N/A')}%")
     print(f"Risk level: {content.get('risk_level', 'N/A')}")

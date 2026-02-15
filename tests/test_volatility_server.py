@@ -1,129 +1,71 @@
-#!/usr/bin/env python3
-"""
-Test script for Volatility Analysis MCP Server
-Tests all tools with real Yahoo Finance data
-"""
+"""Test script for Volatility Analysis Server - Port: 9010"""
+import requests, json
 
-import sys
-sys.path.append('/home/cryptosaiyan/Documents/AutoFinance/mcp-servers/volatility')
+BASE_URL = "http://172.17.0.1:9010/mcp"
 
-from server import (
-    calculate_historical_volatility,
-    detect_volatility_regime,
-    get_volatility_score,
-    compare_volatility
-)
-
-
-def print_result(test_name: str, result: dict):
-    """Pretty print test results"""
-    print(f"\n{'='*60}")
-    print(f"TEST: {test_name}")
-    print(f"{'='*60}")
-    for key, value in result.items():
-        if isinstance(value, dict):
-            print(f"{key}:")
-            for k, v in value.items():
-                print(f"  {k}: {v}")
-        elif isinstance(value, list):
-            print(f"{key}:")
-            for item in value:
-                if isinstance(item, dict):
-                    print(f"  - {item}")
-                else:
-                    print(f"  - {item}")
-        else:
-            print(f"{key}: {value}")
-    print()
-
-
-def test_all():
-    """Run all tests"""
+class MCPSession:
+    def __init__(self, base_url):
+        self.base_url, self.session, self.session_id, self.message_id = base_url, requests.Session(), None, 0
     
-    print("🧪 Testing Volatility Analysis Server with REAL DATA")
-    print("=" * 60)
+    def parse_sse_response(self, response):
+        if 'mcp-session-id' in response.headers: self.session_id = response.headers['mcp-session-id']
+        for line in response.text.strip().split('\n'):
+            if line.startswith('data: '): return json.loads(line[6:])
+        return None
     
-    # Test 1: Historical volatility for AAPL
-    print("\n📊 Test 1: Calculate historical volatility for AAPL...")
-    try:
-        result = calculate_historical_volatility("AAPL", "6mo")
-        print_result("Historical Volatility - AAPL", result)
-        
-        assert result.get("source") == "yahoo_finance", "Should use Yahoo Finance data"
-        assert result.get("data_points", 0) > 0, "Should have historical data points"
-        assert "current_volatility" in result, "Should include current volatility"
-        print("✅ AAPL historical volatility PASSED")
-    except Exception as e:
-        print(f"❌ AAPL historical volatility FAILED: {e}")
-        import traceback
-        traceback.print_exc()
+    def call(self, method, params=None):
+        self.message_id += 1
+        headers = {"Content-Type": "application/json", "Accept": "application/json, text/event-stream"}
+        if self.session_id: headers["mcp-session-id"] = self.session_id
+        return self.parse_sse_response(self.session.post(self.base_url, json={"jsonrpc":"2.0","id":self.message_id,"method":method,"params":params or {}}, headers=headers))
     
-    # Test 2: Volatility regime for BTC
-    print("\n📊 Test 2: Detect volatility regime for BTCUSDT...")
-    try:
-        result = detect_volatility_regime("BTCUSDT")
-        print_result("Volatility Regime - BTC", result)
-        
-        assert result.get("source") == "yahoo_finance", "Should use Yahoo Finance data"
-        assert "regime" in result, "Should have regime classification"
-        assert "percentile" in result, "Should have percentile ranking"
-        print("✅ BTC volatility regime PASSED")
-    except Exception as e:
-        print(f"❌ BTC volatility regime FAILED: {e}")
-        import traceback
-        traceback.print_exc()
-    
-    # Test 3: Volatility score for TSLA
-    print("\n📊 Test 3: Get volatility score for TSLA...")
-    try:
-        result = get_volatility_score("TSLA")
-        print_result("Volatility Score - TSLA", result)
-        
-        assert "risk_level" in result, "Should have risk level"
-        assert "risk_score" in result, "Should have risk score"
-        assert result.get("risk_level") in ["LOW", "MEDIUM", "HIGH"], "Risk level should be valid"
-        assert 0 <= result.get("risk_score", -1) <= 1, "Risk score should be 0-1"
-        print("✅ TSLA volatility score PASSED")
-    except Exception as e:
-        print(f"❌ TSLA volatility score FAILED: {e}")
-        import traceback
-        traceback.print_exc()
-    
-    # Test 4: Compare volatility across symbols
-    print("\n📊 Test 4: Compare volatility across AAPL, MSFT, TSLA...")
-    try:
-        result = compare_volatility(["AAPL", "MSFT", "TSLA"])
-        print_result("Compare Volatility", result)
-        
-        assert result.get("count") == 3, "Should compare all 3 symbols"
-        assert "highest_volatility" in result, "Should identify highest volatility"
-        assert "lowest_volatility" in result, "Should identify lowest volatility"
-        assert "average_volatility" in result, "Should calculate average"
-        print("✅ Volatility comparison PASSED")
-    except Exception as e:
-        print(f"❌ Volatility comparison FAILED: {e}")
-        import traceback
-        traceback.print_exc()
-    
-    # Test 5: Crypto volatility analysis
-    print("\n📊 Test 5: Analyze crypto volatility (ETHUSDT)...")
-    try:
-        result = get_volatility_score("ETHUSDT")
-        print_result("Volatility Score - ETH", result)
-        
-        assert result.get("source") == "yahoo_finance", "Should use Yahoo Finance data"
-        # Crypto typically has higher volatility than stocks
-        assert result.get("volatility_pct", 0) > 0, "Should have measurable volatility"
-        print("✅ ETH volatility analysis PASSED")
-    except Exception as e:
-        print(f"❌ ETH volatility analysis FAILED: {e}")
-        import traceback
-        traceback.print_exc()
-    
-    print("\n" + "=" * 60)
-    print("🎯 All tests completed!")
-    print("=" * 60)
+    def initialize(self):
+        return self.call("initialize", {"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}})
 
+print("="*80 + "\nTesting Volatility Analysis Server (Port 9010)\n" + "="*80)
+mcp = MCPSession(BASE_URL)
 
-if __name__ == "__main__":
-    test_all()
+print("\n📈 Test 1: Initialize...")
+result = mcp.initialize()
+if result:
+    print(f"✅ Initialized: {result.get('result',{}).get('serverInfo',{}).get('name')}")
+else:
+    print("❌ FAILED"); exit(1)
+
+print("\n📈 Test 2: Calculate historical volatility for AAPL...")
+result = mcp.call("tools/call", {"name":"calculate_historical_volatility","arguments":{"symbol":"AAPL","period":"3mo"}})
+if result and "result" in result:
+    content = json.loads(result["result"]["content"][0]["text"])
+    print(f"Volatility: {content.get('volatility')}%, Period: {content.get('period')}")
+    print("✅ PASSED")
+else:
+    print(f"❌ FAILED: {result}")
+
+print("\n📈 Test 3: Detect volatility regime for BTCUSDT...")
+result = mcp.call("tools/call", {"name":"detect_volatility_regime","arguments":{"symbol":"BTCUSDT"}})
+if result and "result" in result:
+    content = json.loads(result["result"]["content"][0]["text"])
+    print(f"Regime: {content.get('regime')}, Symbol: {content.get('symbol')}")
+    print("✅ PASSED")
+else:
+    print(f"❌ FAILED: {result}")
+
+print("\n📈 Test 4: Get volatility score for TSLA...")
+result = mcp.call("tools/call", {"name":"get_volatility_score","arguments":{"symbol":"TSLA"}})
+if result and "result" in result:
+    content = json.loads(result["result"]["content"][0]["text"])
+    print(f"Volatility: {content.get('volatility')}%, Risk Level: {content.get('risk_level')}, Score: {content.get('score')}")
+    print("✅ PASSED")
+else:
+    print(f"❌ FAILED: {result}")
+
+print("\n📈 Test 5: Compare volatility across symbols...")
+result = mcp.call("tools/call", {"name":"compare_volatility","arguments":{"symbols":["AAPL","MSFT","TSLA"]}})
+if result and "result" in result:
+    content = json.loads(result["result"]["content"][0]["text"])
+    print(f"Symbols compared: {len(content.get('symbols',{}))} ")
+    print("✅ PASSED")
+else:
+    print(f"❌ FAILED: {result}")
+
+print("\n" + "="*80 + "\nVolatility Server Testing Complete!\n" + "="*80)

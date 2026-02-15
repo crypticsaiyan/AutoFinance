@@ -1,78 +1,62 @@
-"""
-Test script for Macro Economics Server
-Port: 9010
-"""
+"""Test script for Macro Economics Server - Port: 9007"""
+import requests, json
 
-import requests
-import json
+BASE_URL = "http://172.17.0.1:9007/mcp"
 
-BASE_URL = "http://172.17.0.1:9010/mcp"
-
-def make_mcp_call(method, params=None):
-    """Make an MCP protocol call"""
-    payload = {
-        "jsonrpc": "2.0",
-        "id": 1,
-        "method": method,
-        "params": params or {}
-    }
+class MCPSession:
+    def __init__(self, base_url):
+        self.base_url, self.session, self.session_id, self.message_id = base_url, requests.Session(), None, 0
     
-    headers = {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-    }
+    def parse_sse_response(self, response):
+        if 'mcp-session-id' in response.headers: self.session_id = response.headers['mcp-session-id']
+        for line in response.text.strip().split('\n'):
+            if line.startswith('data: '): return json.loads(line[6:])
+        return None
     
-    response = requests.post(BASE_URL, json=payload, headers=headers)
-    return response.json()
+    def call(self, method, params=None):
+        self.message_id += 1
+        headers = {"Content-Type": "application/json", "Accept": "application/json, text/event-stream"}
+        if self.session_id: headers["mcp-session-id"] = self.session_id
+        return self.parse_sse_response(self.session.post(self.base_url, json={"jsonrpc":"2.0","id":self.message_id,"method":method,"params":params or {}}, headers=headers))
+    
+    def initialize(self):
+        return self.call("initialize", {"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}})
 
-print("=" * 80)
-print("Testing Macro Economics Server (Port 9010)")
-print("=" * 80)
+print("="*80 + "\nTesting Macro Economics Server (Port 9007)\n" + "="*80)
+mcp = MCPSession(BASE_URL)
 
-# Test 1: Initialize
-print("\n🌍 Test 1: Initialize MCP session...")
-result = make_mcp_call("initialize", {
-    "protocolVersion": "2024-11-05",
-    "capabilities": {},
-    "clientInfo": {"name": "test", "version": "1.0"}
-})
-print(f"✅ Initialized: {result.get('result', {}).get('serverInfo', {}).get('name')}")
+print("\n🌍 Test 1: Initialize...")
+result = mcp.initialize()
+if result:
+    print(f"✅ Initialized: {result.get('result',{}).get('serverInfo',{}).get('name')}")
+else:
+    print("❌ FAILED"); exit(1)
 
-# Test 2: Analyze macro environment
 print("\n🌍 Test 2: Analyze macro environment...")
-result = make_mcp_call("tools/call", {
-    "name": "analyze_macro",
-    "arguments": {}
-})
-if "result" in result:
+result = mcp.call("tools/call", {"name":"analyze_macro","arguments":{}})
+if result and "result" in result:
     content = json.loads(result["result"]["content"][0]["text"])
-    print(f"Market regime: {content.get('market_regime', 'N/A')}")
-    print(f"Investment stance: {content.get('investment_stance', 'N/A')}")
-    print(f"Risk appetite: {content.get('risk_appetite', 'N/A')}")
-    indicators = content.get("indicators", {})
-    print(f"GDP growth: {indicators.get('gdp_growth', 'N/A')}%")
-    print(f"Inflation: {indicators.get('inflation', 'N/A')}%")
-    print("✅ Macro analysis PASSED")
+    print(f"Environment: {content.get('environment')}, GDP: {content.get('gdp_trend')}, Inflation: {content.get('inflation_trend')}")
+    print("✅ PASSED")
 else:
-    print("❌ Test FAILED:", result)
+    print(f"❌ FAILED: {result}")
 
-# Test 3: Get macro indicators
 print("\n🌍 Test 3: Get macro indicators...")
-result = make_mcp_call("tools/call", {
-    "name": "get_macro_indicators",
-    "arguments": {}
-})
-if "result" in result:
+result = mcp.call("tools/call", {"name":"get_macro_indicators","arguments":{}})
+if result and "result" in result:
     content = json.loads(result["result"]["content"][0]["text"])
-    print(f"GDP growth: {content.get('gdp_growth', 'N/A')}%")
-    print(f"Inflation: {content.get('inflation', 'N/A')}%")
-    print(f"Unemployment: {content.get('unemployment', 'N/A')}%")
-    print(f"Interest rate: {content.get('interest_rate', 'N/A')}%")
-    print(f"Source: {content.get('source', 'N/A')}")
-    print("✅ Macro indicators test PASSED")
+    print(f"Indicators retrieved: {len(content.get('indicators',{}))} categories")
+    print("✅ PASSED")
 else:
-    print("❌ Test FAILED:", result)
+    print(f"❌ FAILED: {result}")
 
-print("\n" + "=" * 80)
-print("Macro Economics Server Testing Complete!")
-print("=" * 80)
+print("\n🌍 Test 4: Get tech sector outlook...")
+result = mcp.call("tools/call", {"name":"get_sector_outlook","arguments":{"sector":"technology"}})
+if result and "result" in result:
+    content = json.loads(result["result"]["content"][0]["text"])
+    print(f"Sector: {content.get('sector')}, Outlook: {content.get('outlook')}")
+    print("✅ PASSED")
+else:
+    print(f"❌ FAILED: {result}")
+
+print("\n" + "="*80 + "\nMacro Server Testing Complete!\n" + "="*80)

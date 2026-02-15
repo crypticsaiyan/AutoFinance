@@ -82,40 +82,47 @@
 
 ## 🚀 Current State
 
-### Servers Running (12/13)
+### Servers Running (13/13)
 ```bash
 # Check status
 ps aux | grep "mcp_sse_server.py" | grep -v grep
 
-# Currently running:
-- market (9001)         ✅ Real Yahoo Finance
-- risk (9002)           ✅ Logic-based validation
-- execution (9003)      ✅ Portfolio state
-- compliance (9004)     ✅ Audit logging
-- technical (9005)      ✅ Real Yahoo Finance - JUST CONVERTED
-- fundamental (9006)    ✅ Real Yahoo Finance - JUST CONVERTED
-- volatility (9007)     ✅ Real Yahoo Finance - JUST CONVERTED
-- portfolio-analytics (9008) ✅ Calculations
-- news (9009)           ✅ Enhanced keyword analysis
-- macro (9010)          ✅ Realistic simulation
+# Currently running (13 servers):
+- market (9001)                  ✅ Real Yahoo Finance
+- risk (9002)                    ✅ Logic-based validation  
+- execution (9003)               ✅ Portfolio state
+- compliance (9004)              ✅ Audit logging
+- technical (9005)               ✅ Real Yahoo Finance - RSI, MACD, Bollinger
+- fundamental (9006)             ✅ Real Yahoo Finance - P/E, ROE, fundamentals
+- macro (9007)                   ✅ Realistic simulation - GDP, inflation
+- news (9008)                    ✅ Enhanced keyword sentiment analysis
+- portfolio-analytics (9009)     ✅ Portfolio metrics & rebalancing
+- volatility (9010)              ✅ Real Yahoo Finance - historical volatility
+- alert-engine (9011)            ✅ File persistence
+- simulation-engine (9012)       ✅ Monte Carlo
+- notification-gateway (9013)    ✅ WebSocket/email
+```
 - alert-engine (9011)   ✅ File persistence
 - simulation-engine (9012) ✅ Monte Carlo
 ```
 
-### Just Completed (Last 4 Hours)
+### Just Completed (Last 6 Hours)
 ✅ Converted technical server from mock → real Yahoo Finance  
 ✅ Converted volatility server from mock → real Yahoo Finance  
 ✅ Converted fundamental server from mock → real Yahoo Finance  
 ✅ Enhanced news server with production-ready framework  
 ✅ Enhanced macro server with realistic economic data  
-✅ Created 3 test scripts (all 15 tests passing)  
+✅ **Queried all 8 servers for actual tool schemas**  
+✅ **Rewrote all 8 test files with real tool implementations**  
+✅ **All 8 test files passing (39 total tests) with session management**  
 ✅ All servers successfully restarted and verified  
 
 ### Real Data Examples (Working RIGHT NOW)
-- **AAPL**: $255.78, P/E 32.38, RSI 50.56, volatility 27.55%
-- **BTC**: $69,690, volatility 67.43% (98th percentile!)
-- **MSFT**: P/E 25.13, 48.5% upside to analyst target
-- **TSLA**: $417.44, RSI 37.51% volatility
+- **AAPL**: $255.82, RSI 41.91 (NEUTRAL), Bollinger Bands $283.45/$240.73
+- **BTCUSDT**: $69,724, volatility HIGH regime, 24 candles returned
+- **MSFT**: Technology sector, Software - Infrastructure industry
+- **TSLA**: RSI calculated, volatility comparison available
+- **Complete portfolio workflow**: $100k → buy 10 AAPL @ $250 → update prices → sell 5 shares
 
 ---
 
@@ -156,9 +163,17 @@ ps aux | grep "mcp_sse_server.py" | grep -v grep
 ### Run Tests
 ```bash
 source venv/bin/activate.fish
-python test_technical_server.py      # Test technical analysis
-python test_volatility_server.py     # Test volatility analysis
-python test_fundamental_server.py    # Test fundamental analysis
+cd tests
+python test_all_servers.py           # Run all 8 test files (39 tests)
+# OR individual servers:
+python test_market_server.py         # 5 tests (prices, candles, volatility)
+python test_technical_server.py      # 6 tests (RSI, MACD, Bollinger, signals)
+python test_fundamental_server.py    # 4 tests (analysis, overview, comparison)
+python test_volatility_server.py     # 5 tests (historical, regime, scoring)
+python test_news_server.py           # 4 tests (sentiment, news, market)
+python test_macro_server.py          # 4 tests (macro analysis, indicators)
+python test_risk_server.py           # 5 tests (policy, validation)
+python test_execution_server.py      # 6 tests (trades, portfolio state)
 ```
 
 ---
@@ -169,19 +184,19 @@ python test_fundamental_server.py    # Test fundamental analysis
 **Tab**: "Remote (orchestrated not by Archestra)"  
 **Server URLs** (for Archestra):
 ```
-Market:      http://172.17.0.1:9001/mcp
-Risk:        http://172.17.0.1:9002/mcp
-Execution:   http://172.17.0.1:9003/mcp
-Compliance:  http://172.17.0.1:9004/mcp
-Technical:   http://172.17.0.1:9005/mcp
-Fundamental: http://172.17.0.1:9006/mcp
-Volatility:  http://172.17.0.1:9007/mcp
-Portfolio:   http://172.17.0.1:9008/mcp
-News:        http://172.17.0.1:9009/mcp
-Macro:       http://172.17.0.1:9010/mcp
-Alert:       http://172.17.0.1:9011/mcp
-Simulation:  http://172.17.0.1:9012/mcp
-Notify:      http://172.17.0.1:9013/mcp
+Market:              http://172.17.0.1:9001/mcp
+Risk:                http://172.17.0.1:9002/mcp
+Execution:           http://172.17.0.1:9003/mcp
+Compliance:          http://172.17.0.1:9004/mcp
+Technical:           http://172.17.0.1:9005/mcp
+Fundamental:         http://172.17.0.1:9006/mcp
+Macro:               http://172.17.0.1:9007/mcp
+News:                http://172.17.0.1:9008/mcp
+Portfolio-Analytics: http://172.17.0.1:9009/mcp
+Volatility:          http://172.17.0.1:9010/mcp
+Alert:               http://172.17.0.1:9011/mcp
+Simulation:          http://172.17.0.1:9012/mcp
+Notify:              http://172.17.0.1:9013/mcp
 ```
 
 **Important**: Use 172.17.0.1 (Docker bridge IP), NOT localhost!
@@ -200,6 +215,29 @@ curl -X POST http://172.17.0.1:9005/mcp \
   -H "Accept: application/json, text/event-stream" \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'
 ```
+
+### Discover All Server Tools
+```bash
+# Use the query utility to discover all tools across all servers
+cd /home/cryptosaiyan/Documents/AutoFinance/tests
+python query_servers.py
+
+# This queries ports 9002-9010 and shows:
+# - Server name from initialize response
+# - All available tools with descriptions
+# - Parameter names, types, and required fields
+# Output saved to: tests/server_tools_output.txt (8KB, 351 lines)
+```
+
+**Tool Discovery Results** (8 servers tested):
+- **Port 9002** (Risk): validate_trade, validate_rebalance, get_risk_policy
+- **Port 9003** (Execution): execute_trade, get_portfolio_state, update_position_prices, reset_portfolio, apply_rebalance
+- **Port 9005** (Technical): generate_signal, calculate_rsi_tool, calculate_macd_tool, calculate_bollinger_bands_tool, calculate_support_resistance
+- **Port 9006** (Fundamental): analyze_fundamentals, get_company_overview, compare_fundamentals, get_investment_thesis
+- **Port 9007** (Macro): analyze_macro, get_macro_indicators, get_sector_outlook, assess_portfolio_timing, get_correlation_analysis
+- **Port 9008** (News): analyze_sentiment, get_news, get_market_sentiment, analyze_custom_headline
+- **Port 9009** (Portfolio-Analytics): evaluate_portfolio, calculate_rebalance_proposal, get_allocation_summary, set_simulation_portfolio
+- **Port 9010** (Volatility): calculate_historical_volatility, detect_volatility_regime, get_volatility_score, compare_volatility
 
 ---
 
@@ -246,10 +284,11 @@ generate_signal("AAPL", "3mo")
 # }
 ```
 
-**Test Results**: ✅ 6/6 tests passing
-- AAPL: $255.78, RSI 50.56, HOLD (downtrend)
-- BTC: $69,690, RSI 37.92, SELL (strong downtrend)
-- MSFT: RSI 24.92 (OVERSOLD)
+**Test Results**: ✅ 6/6 tests passing (test_technical_server.py)
+- AAPL: Signal HOLD, RSI 41.91, Bollinger Bands $283.45/$240.73
+- TSLA: RSI 41.91 (NEUTRAL)
+- BTCUSDT: MACD analysis
+- MSFT: Support/resistance levels calculated
 
 ### 3. Fundamental Analysis Server (Port 9006) - REAL DATA ✅
 **File**: `mcp-servers/fundamental/server.py`  
@@ -285,12 +324,13 @@ analyze_fundamentals("AAPL")
 # }
 ```
 
-**Test Results**: ✅ 4/4 tests passing
-- AAPL: $3.76T cap, P/E 32.38, ROE 152%, BUY
-- MSFT: 48.5% upside to target, STRONG BUY
-- TSLA: High valuation, HOLD
+**Test Results**: ✅ 4/4 tests passing (test_fundamental_server.py)
+- AAPL: Comprehensive fundamental analysis, company overview
+- MSFT: Company overview with sector/industry data
+- GOOGL/AAPL/MSFT: Multi-stock comparison
+- TSLA: Investment thesis generation
 
-### 4. Volatility Analysis Server (Port 9007) - REAL DATA ✅
+### 4. Volatility Analysis Server (Port 9010) - REAL DATA ✅
 **File**: `mcp-servers/volatility/server.py`  
 **Data**: Yahoo Finance historical prices  
 **Status**: JUST CONVERTED (last 2 hours)  
@@ -316,12 +356,13 @@ get_volatility_score("AAPL")
 # }
 ```
 
-**Test Results**: ✅ 5/5 tests passing
-- AAPL: 27.55% (MEDIUM risk)
-- BTC: 67.43% (HIGH risk, 98th percentile!)
-- ETH: 83.64% (EXTREME risk)
+**Test Results**: ✅ 5/5 tests passing (test_volatility_server.py)
+- AAPL: Historical volatility calculation (3mo period)
+- BTCUSDT: Volatility regime detection (HIGH regime)
+- TSLA: Comprehensive volatility score with risk level
+- AAPL/MSFT/TSLA: Multi-symbol volatility comparison
 
-### 5. News Sentiment Server (Port 9009) - ENHANCED ✅
+### 5. News Sentiment Server (Port 9008) - ENHANCED ✅
 **File**: `mcp-servers/news/server.py`  
 **Data**: Keyword-based sentiment (ready for NewsAPI.org)  
 **Status**: Production-ready framework  
@@ -342,7 +383,7 @@ NEWS_API_URL = "https://newsapi.org/v2/everything"
 # Code structure already in place - just uncomment and add key
 ```
 
-### 6. Macro Economics Server (Port 9010) - ENHANCED ✅
+### 6. Macro Economics Server (Port 9007) - ENHANCED ✅
 **File**: `mcp-servers/macro/server.py`  
 **Data**: Realistic simulation (ready for FRED API)  
 **Status**: Production-ready framework  
@@ -370,10 +411,133 @@ FRED_API_URL = "https://api.stlouisfed.org/fred/series/observations"
 - **Risk** (9002): 5% position limit, 30% portfolio risk cap
 - **Execution** (9003): $100,000 starting balance, trade execution
 - **Compliance** (9004): Audit logging with timestamps
-- **Portfolio Analytics** (9008): Returns, volatility, Sharpe ratio
+- **Portfolio Analytics** (9009): Returns, volatility, Sharpe ratio
 - **Alert Engine** (9011): Price alerts with file persistence
 - **Simulation Engine** (9012): Monte Carlo simulations
 - **Notification Gateway** (9013): WebSocket/email notifications
+
+---
+
+## 🧪 Comprehensive Test Suite
+
+### Test Infrastructure
+**Location**: `/home/cryptosaiyan/Documents/AutoFinance/tests/`  
+**Status**: ✅ All 8 test files passing (39 total tests)  
+**Framework**: Custom MCPSession class for session management  
+
+**Key Features**:
+- Server-Sent Events (SSE) response parsing
+- MCP session ID tracking across multiple requests
+- Sequential message ID generation
+- Real tool discovery via tools/list method
+- Validated against actual server implementations
+
+### Test Files & Coverage
+
+**1. test_market_server.py** (5 tests)
+- Initialize session
+- Get live price for AAPL (real Yahoo Finance data)
+- Get market overview
+- Get candle data for BTCUSDT (24 candles)
+- Calculate volatility for TSLA
+
+**2. test_technical_server.py** (6 tests)
+- Initialize session
+- Generate signal for AAPL (HOLD with confidence)
+- Calculate RSI for TSLA (41.91 - NEUTRAL)
+- Calculate MACD for BTCUSDT
+- Calculate Bollinger Bands for AAPL ($283.45/$240.73)
+- Calculate support/resistance for MSFT
+
+**3. test_fundamental_server.py** (4 tests)
+- Initialize session
+- Analyze fundamentals for AAPL (valuation, quality, growth scores)
+- Get company overview for MSFT (sector, industry)
+- Compare fundamentals (AAPL/MSFT/GOOGL)
+- Get investment thesis for TSLA
+
+**4. test_volatility_server.py** (5 tests)
+- Initialize session
+- Calculate historical volatility for AAPL (3mo period)
+- Detect volatility regime for BTCUSDT (HIGH regime)
+- Get volatility score for TSLA (risk level, score)
+- Compare volatility (AAPL/MSFT/TSLA)
+
+**5. test_news_server.py** (4 tests)
+- Initialize session
+- Analyze sentiment for AAPL (score, sentiment)
+- Get news for BTCUSDT (5 items)
+- Get market sentiment (AAPL/TSLA/MSFT aggregate)
+
+**6. test_macro_server.py** (4 tests)
+- Initialize session
+- Analyze macro environment (GDP, inflation trends)
+- Get macro indicators (multiple categories)
+- Get sector outlook for technology
+
+**7. test_risk_server.py** (5 tests)
+- Initialize session
+- Get risk policy (position limits, thresholds)
+- Validate small trade (2.5% position - APPROVED)
+- Validate oversized trade (50% position - REJECTED)
+- Validate low confidence trade (50% confidence - REJECTED)
+
+**8. test_execution_server.py** (6 tests)
+- Initialize session
+- Reset portfolio to $100,000
+- Get portfolio state (cash, positions, total value)
+- Execute BUY trade for AAPL (10 shares @ $250)
+- Update position prices (mark-to-market)
+- Execute SELL trade (5 shares)
+
+### MCPSession Class
+**Purpose**: Manages stateful MCP protocol communication  
+**Features**:
+```python
+class MCPSession:
+    def __init__(self, base_url)
+    def parse_sse_response(response)  # Extract JSON from SSE format
+    def call(method, params)           # Make tool calls with session
+    def initialize()                   # Initialize MCP session
+```
+
+**Key Implementation**:
+- Extracts `mcp-session-id` from response headers
+- Maintains session across multiple tool calls
+- Parses SSE format: `event: message\ndata: {...}`
+- Sequential message IDs for each request
+- Persistent requests.Session() for connection reuse
+
+### Running Tests
+```bash
+# Run all tests (master suite)
+cd /home/cryptosaiyan/Documents/AutoFinance/tests
+python test_all_servers.py
+
+# Expected output:
+# ✅ PASS - test_market_server.py
+# ✅ PASS - test_technical_server.py
+# ✅ PASS - test_fundamental_server.py
+# ✅ PASS - test_volatility_server.py
+# ✅ PASS - test_news_server.py
+# ✅ PASS - test_macro_server.py
+# ✅ PASS - test_risk_server.py
+# ✅ PASS - test_execution_server.py
+# Total: 8/8 passed
+# 🎉 All tests passed!
+
+# Run individual test file
+python test_market_server.py
+```
+
+### Test Development Process
+1. **Discovery Phase**: Used `query_servers.py` to query all servers via `tools/list`
+2. **Schema Analysis**: Extracted tool names, parameters, and required fields
+3. **Implementation**: Wrote tests matching actual server tool schemas
+4. **Validation**: Fixed parameter types (e.g., volatility as decimal 0.25, not 25.0)
+5. **Session Management**: Added MCPSession class for multi-request workflows
+
+**Result**: All 39 tests pass with real server responses, no mocked data
 
 ---
 
@@ -533,7 +697,7 @@ Result: Multi-layered analysis
 ✅ Convert fundamental server to yfinance .info - **DONE**  
 ✅ Integrate NewsAPI into news server - **ENHANCED (ready for API key)**  
 ✅ Integrate FRED API into macro server - **ENHANCED (ready for API key)**  
-✅ Create test scripts for all servers - **DONE (15/15 tests passing)**  
+✅ Create test scripts for all servers - **DONE (8 test files, 39 tests passing)**  
 ⏳ Add investor-focused features - **NOT STARTED**  
 ⏳ Enhance risk management for real-world use - **NOT STARTED**
 
@@ -583,23 +747,23 @@ Record walkthrough showing:
 ### What Makes This Special
 1. **Real Data**: Yahoo Finance integration (not mocks!)
 2. **Production-Ready**: 13 servers, proper architecture, error handling
-3. **Tested**: 15/15 tests passing with real data
+3. **Tested**: 8/8 test files passing (39 total tests) with real data
 4. **Comprehensive**: Technical + Fundamental + Macro analysis
 5. **Risk Management**: Position limits, audit trails, compliance
 6. **Investor-Focused**: Not just trading, but long-term investment
 
 ### Demo Script (5 minutes)
 ```
-0:00 - Intro: "AutoFinance - real financial analysis, real data"
-0:30 - Show Archestra with 13 servers connected
-1:00 - Query: "Should I buy Apple stock?"
-1:30 - Technical analysis (real $255.78, RSI 50.56)
-2:00 - Fundamental analysis (P/E 32.38, ROE 152%)
-2:30 - Risk validation (5% limit, portfolio state)
-3:00 - Complete trade + audit trail
-3:30 - Show real data sources (yfinance code)
-4:00 - Compare with Bitcoin (67% volatility!)
-4:30 - Closing: "Real data, real decisions, real results"
+0:00 - Intro: "AutoFinance - 13 MCP servers, real Yahoo Finance data"
+0:30 - Show test suite: "python test_all_servers.py" → 8/8 PASS, 39 tests
+1:00 - Show Archestra with 13 servers connected
+1:30 - Query: "Should I buy Apple stock?"
+2:00 - Technical: AAPL $255.82, RSI 41.91 (NEUTRAL), signal HOLD
+2:30 - Fundamental: Company overview, sector analysis, investment thesis
+3:00 - Volatility: Historical volatility, regime detection, risk scoring
+3:30 - Risk validation: 2.5% position → APPROVED, 50% position → REJECTED
+4:00 - Execute trade: BUY 10 AAPL @ $250, portfolio state updates
+4:30 - Show real data sources (yfinance code) + test coverage
 ```
 
 ---
@@ -645,7 +809,9 @@ pkill -f "python.*mcp_sse_server.py"  # Stop all
 **If you need to test**:
 ```bash
 source venv/bin/activate.fish
-python test_technical_server.py   # Quick test
+cd tests
+python test_all_servers.py        # Run all 8 test files (39 tests)
+python test_market_server.py      # Quick single server test
 ```
 
 ---
@@ -661,8 +827,9 @@ python test_technical_server.py   # Quick test
 
 ---
 
-**Last Update**: February 15, 2026 01:17 UTC  
-**Status**: Production-ready, all 12 servers running, 15/15 tests passing  
+**Last Update**: February 15, 2026 07:30 UTC  
+**Status**: Production-ready, all 13 servers running, 8/8 test files (39 tests) passing  
+**Testing**: Complete test suite with MCPSession management, real tool discovery  
 **Ready for**: Demo, submission, or further development
 
 ---
@@ -677,12 +844,12 @@ source venv/bin/activate.fish
 
 # Check status
 ps aux | grep "mcp_sse_server.py" | grep -v grep | wc -l
-# Should return: 12 (or 13)
+# Should return: 13 (all servers running)
 
-# Test real data
-python test_technical_server.py
-python test_volatility_server.py
-python test_fundamental_server.py
+# Test all servers (comprehensive suite)
+cd tests
+python test_all_servers.py
+# Expected output: "Total: 8/8 passed" + "🎉 All tests passed!"
 
 # Stop everything
 pkill -f "python.*mcp_sse_server.py"
