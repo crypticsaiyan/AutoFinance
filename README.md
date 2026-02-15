@@ -23,8 +23,8 @@
 
 <div align="center">
 
-### CLI Interface
-![CLI](assets/landi.png) 
+### TUI
+![TUI](assets/landi.png) 
 
 ### Dashboard View
 ![Dashboard](assets/dashboard.png)
@@ -277,7 +277,7 @@ Follow the detailed instructions in [Agent_def.md](Agent_def.md) to create all 1
 
 ---
 
-## 🖥️ CLI Interface
+## 🖥️ TUI Interface
 
 AutoFinance includes a beautiful, intuitive terminal-based interface for interactive trading and portfolio management.
 
@@ -292,7 +292,7 @@ AutoFinance includes a beautiful, intuitive terminal-based interface for interac
 ```bash
 cd cli
 ./install.sh      # Install dependencies
-./run.sh          # Launch CLI
+./run.sh          # Launch TUI interface
 ```
 
 Or run directly:
@@ -316,7 +316,7 @@ python main.py
 - **Yahoo Finance** - Stock market data (polling)
 - Both sources work without API keys for public data
 
-For complete CLI documentation, see [cli/CLI_README.md](cli/CLI_README.md)
+For complete TUI documentation, see [cli/CLI_README.md](cli/CLI_README.md)
 
 ---
 
