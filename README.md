@@ -41,25 +41,61 @@
 AutoFinance is an **AI-powered financial control plane** that combines:
 
 ### Core Capabilities
-- 🔌 **13 Specialized MCP Servers** - Market data, technical analysis, risk management, execution, compliance
+- 🔌 **14 Specialized MCP Servers** - Market data, technical analysis, risk management, execution, compliance, strategy allocation
 - 🤖 **12 AI Agents** - Hierarchical agent orchestration via Archestra
 - 📊 **Real Market Data** - Live Yahoo Finance integration (no mocks!)
 - 🛡️ **Production Governance** - Risk validation, audit logging, compliance tracking
 - 📢 **Multi-Channel Notifications** - Slack, WhatsApp, SMS, Email
+- 💼 **Smart Portfolio Allocation** - Automated 40% invest / 60% trade strategy (NEW!)
 
 ### Use Cases
 - 📈 Short-term trading with technical analysis
 - 💼 Long-term investing with fundamental research
 - 🎯 Portfolio management and rebalancing
+- ⚖️ Smart 40/60 allocation (investing/trading) with automatic drift monitoring
 - ⚠️ Risk assessment and position validation
 - 🔔 Price alerts and strategy simulations
 - 📝 Comprehensive audit trails for compliance
 
 ---
 
+## 🤖 Built with GitHub Copilot CLI
+
+> **GitHub Copilot CLI Challenge Submission**
+
+AutoFinance was developed extensively using **GitHub Copilot CLI**, showcasing all major features:
+
+### ✨ Copilot CLI Features Used
+
+- **🎯 Custom Instructions** - Repository-wide and path-specific instructions guide development
+  - `.github/copilot-instructions.md` - Project coding standards and financial domain guidelines
+  - `.github/instructions/` - Context-aware instructions for MCP servers, CLI, and tests
+
+- **🤖 Custom Agents** - Specialized AI agents for different development roles
+  - `mcp-server-developer` - Expert in MCP protocol and financial APIs
+  - `financial-analyst` - Technical analysis and trading strategy specialist
+  - `cli-dashboard-developer` - Textual framework and terminal UI expert
+  - `test-engineer` - Comprehensive testing and quality assurance
+
+- **💡 Agent Skills** - Reusable knowledge for common tasks
+  - `financial-data-validation` - Market data accuracy verification
+  - `mcp-server-debugging` - Systematic server troubleshooting
+  - `technical-analysis-implementation` - Indicator calculation patterns
+  - `cli-dashboard-testing` - Component testing strategies
+
+- **🔗 Hooks** - Automated quality checks at key development points
+  - Session logging and environment validation
+  - Pre/post tool execution checks
+  - Automated syntax validation
+  - Security and dependency monitoring
+
+📚 **See [COPILOT_CLI_USAGE.md](COPILOT_CLI_USAGE.md) for detailed documentation on how Copilot CLI accelerated development!**
+
+---
+
 ## 🏗️ Architecture
 
-### MCP Servers (13)
+### MCP Servers (14)
 ```
 Port 9001: Market          - Real-time prices from Yahoo Finance
 Port 9002: Risk            - Trade validation and position limits
@@ -67,13 +103,14 @@ Port 9003: Execution       - Portfolio state and trade execution
 Port 9004: Compliance      - Audit logging and compliance metrics
 Port 9005: Technical       - RSI, MACD, Bollinger Bands (real data)
 Port 9006: Fundamental     - P/E, ROE, growth analysis (real data)
-Port 9007: Volatility      - Historical volatility calculations (real data)
-Port 9008: Portfolio       - Portfolio analytics and metrics
-Port 9009: News            - Sentiment analysis (keyword-based)
-Port 9010: Macro           - GDP, inflation, rates (realistic simulation)
+Port 9007: Macro           - GDP, inflation, rates (realistic simulation)
+Port 9008: News            - Sentiment analysis (keyword-based)
+Port 9009: Portfolio       - Portfolio analytics and metrics
+Port 9010: Volatility      - Historical volatility calculations (real data)
 Port 9011: Alert Engine    - Price alerts and monitors
 Port 9012: Simulation      - Monte Carlo "what-if" scenarios
 Port 9013: Notifications   - Multi-channel delivery
+Port 9014: Strategy Mgr    - 40% invest / 60% trade allocation (NEW!)
 ```
 
 ### Agent Hierarchy (12 Agents)
@@ -93,6 +130,44 @@ Level 1: Portfolio Manager (CEO)
 ```
 
 **See [Agent_def.md](Agent_def.md) for complete agent configurations.**
+
+---
+
+## 💼 40% Invest / 60% Trade Strategy (NEW!)
+
+AutoFinance now includes a **Strategy Manager** that automatically maintains a balanced portfolio allocation:
+
+- **40% Long-Term Investing** - Quality stocks, fundamental analysis, buy & hold strategy
+- **60% Active Trading** - Technical signals, momentum plays, short-term gains
+
+### Key Features
+- ✅ **Automatic Drift Detection** - Monitors allocation and alerts when it exceeds 5% threshold
+- ✅ **Smart Rebalancing** - Coordinates fund transfers between investing and trading buckets
+- ✅ **Flexible Configuration** - Adjust allocations, thresholds, and risk profiles
+- ✅ **Integration Ready** - Works seamlessly with investor-supervisor and trader-supervisor
+
+### Quick Start
+```bash
+# Start with strategy manager included
+./start_sse_servers.sh
+
+# Or run the setup wizard
+./setup_strategy.sh
+```
+
+### Example Usage
+```
+User: "Show me my portfolio allocation"
+→ Strategy Manager shows: 42% investing, 58% trading (2% drift)
+
+User: "My trading bucket gained 15%, should we rebalance?"
+→ Strategy Manager proposes: Transfer $6,340 from trading to investing
+```
+
+**📖 Complete Documentation:**
+- [QUICK_START_STRATEGY.md](QUICK_START_STRATEGY.md) - Get started in 3 steps
+- [STRATEGY_GUIDE.md](STRATEGY_GUIDE.md) - Comprehensive guide with examples
+- [mcp-servers/strategy-manager/ARCHITECTURE.md](mcp-servers/strategy-manager/ARCHITECTURE.md) - Visual diagrams
 
 ---
 
@@ -117,12 +192,12 @@ Key packages: `mcp>=0.9.0`, `fastmcp>=0.2.0`, `yfinance>=1.1.0`
 ./start_sse_servers.sh
 ```
 
-This starts all 13 servers on ports 9001-9013. Each server uses Streamable HTTP transport on `/mcp` endpoint.
+This starts all 14 servers on ports 9001-9014. Each server uses Streamable HTTP transport on `/mcp` endpoint.
 
 **Verify servers are running:**
 ```bash
 ps aux | grep "mcp_sse_server.py" | grep -v grep | wc -l
-# Should return: 12 or 13
+# Should return: 13 or 14
 ```
 
 ### 3. Start Archestra
@@ -136,7 +211,7 @@ Access Archestra UI: http://localhost:3000
 
 ### 4. Configure MCP Servers in Archestra
 
-Go to **Archestra UI → MCP Registry** and add these 13 servers:
+Go to **Archestra UI → MCP Registry** and add these 14 servers:
 
 ```json
 {
@@ -159,16 +234,16 @@ Go to **Archestra UI → MCP Registry** and add these 13 servers:
     "autofinance-fundamental": {
       "url": "http://172.17.0.1:9006/mcp"
     },
-    "autofinance-volatility": {
+    "autofinance-macro": {
       "url": "http://172.17.0.1:9007/mcp"
     },
-    "autofinance-portfolio-analytics": {
+    "autofinance-news": {
       "url": "http://172.17.0.1:9008/mcp"
     },
-    "autofinance-news": {
+    "autofinance-portfolio-analytics": {
       "url": "http://172.17.0.1:9009/mcp"
     },
-    "autofinance-macro": {
+    "autofinance-volatility": {
       "url": "http://172.17.0.1:9010/mcp"
     },
     "autofinance-alert-engine": {
@@ -179,6 +254,9 @@ Go to **Archestra UI → MCP Registry** and add these 13 servers:
     },
     "autofinance-notification-gateway": {
       "url": "http://172.17.0.1:9013/mcp"
+    },
+    "autofinance-strategy-manager": {
+      "url": "http://172.17.0.1:9014/mcp"
     }
   }
 }
@@ -569,6 +647,43 @@ AutoFinance/
 
 ---
 
+---
+
+## 🤖 Copilot CLI Integration (Hackathon Special)
+
+This project is optimized for GitHub Copilot CLI!
+
+### 1. Custom Agents
+We have defined specialized agents in `AGENTS.md` to help you navigate the codebase:
+- **@Finance Expect**: Understands market data and trading strategies.
+- **@Test Runner**: Expert in our test suite.
+- **@Compliance Officer**: strict code reviewer for financial safety.
+
+Try:
+```bash
+copilot
+> @Finance Expert analyze the risk of buying 100 AAPL shares
+```
+
+### 2. Project Context
+Copilot is context-aware thanks to `.github/copilot-instructions.md`, understanding our specific microservices architecture and avoiding hallucinations.
+
+### 3. Local MCP Integration
+You can connect Copilot safely to your local MCP servers!
+Run the configuration helper:
+```bash
+python configure_copilot.py
+```
+This generates `copilot_mcp_config.json`. Add this to your `~/.copilot/mcp-config.json`.
+Then start Copilot and ask:
+```bash
+copilot -p "What is the current price of Bitcoin?"
+```
+Copilot will use the *real* local `market` server to fetch the data!
+
+---
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+

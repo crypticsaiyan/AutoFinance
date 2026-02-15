@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "bash": "echo \"[$(date +%Y-%m-%d\\ %H:%M:%S)] Copilot CLI session started\" >> logs/copilot-sessions.log && mkdir -p logs",
+        "powershell": "New-Item -ItemType Directory -Force -Path logs | Out-Null; Add-Content -Path logs/copilot-sessions.log -Value \"[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Copilot CLI session started\"",
+        "cwd": ".",
+        "timeoutSec": 5
+      },
+      {
+        "type": "command",
+        "bash": "./scripts/check-env-vars.sh",
+        "powershell": "./scripts/check-env-vars.ps1",
+        "cwd": ".",
+        "timeoutSec": 10
+      }
+    ],
+    "sessionEnd": [
+      {
+        "type": "command",
+        "bash": "echo \"[$(date +%Y-%m-%d\\ %H:%M:%S)] Copilot CLI session ended. Duration: $((SECONDS/60)) minutes\" >> logs/copilot-sessions.log",
+        "powershell": "Add-Content -Path logs/copilot-sessions.log -Value \"[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Copilot CLI session ended\"",
+        "cwd": ".",
+        "timeoutSec": 5
+      }
+    ],
+    "userPromptSubmitted": [
+      {
+        "type": "command",
+        "bash": "./scripts/log-prompt.sh",
+        "powershell": "./scripts/log-prompt.ps1",
+        "cwd": ".",
+        "timeoutSec": 5,
+        "env": {
+          "LOG_LEVEL": "INFO"
+        }
+      }
+    ],
+    "preToolUse": [
+      {
+        "type": "command",
+        "bash": "./scripts/pre-tool-validation.sh",
+        "powershell": "./scripts/pre-tool-validation.ps1",
+        "cwd": ".",
+        "timeoutSec": 15
+      }
+    ],
+    "postToolUse": [
+      {
+        "type": "command",
+        "bash": "./scripts/post-tool-check.sh",
+        "powershell": "./scripts/post-tool-check.ps1",
+        "cwd": ".",
+        "timeoutSec": 10
+      },
+      {
+        "type": "command",
+        "bash": "if [ -f 'requirements.txt' ]; then pip check > /dev/null 2>&1 || echo 'Warning: Dependency issues detected'; fi",
+        "powershell": "if (Test-Path 'requirements.txt') { pip check 2>&1 | Out-Null; if ($LASTEXITCODE -ne 0) { Write-Host 'Warning: Dependency issues detected' } }",
+        "cwd": ".",
+        "timeoutSec": 20
+      }
+    ],
+    "errorOccurred": [
+      {
+        "type": "command",
+        "bash": "./scripts/error-handler.sh",
+        "powershell": "./scripts/error-handler.ps1",
+        "cwd": ".",
+        "timeoutSec": 10
+      }
+    ]
+  }
+}

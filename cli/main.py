@@ -9,7 +9,7 @@ import os
 sys.path.insert(0, os.path.dirname(__file__))
 
 from landing import main as landing_main
-from dashboard_new import main as dashboard_main
+from dashboard import main as dashboard_main
 
 
 def main():

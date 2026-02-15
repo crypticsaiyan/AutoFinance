@@ -11,7 +11,7 @@ echo "=============================================="
 echo ""
 
 # Start each server in background
-for server in market risk execution compliance technical fundamental macro news portfolio-analytics volatility simulation-engine notification-gateway; do
+for server in market risk execution compliance technical fundamental macro news portfolio-analytics volatility simulation-engine notification-gateway strategy-manager; do
     echo "  Starting $server..."
     $PYTHON $SCRIPT $server &
     sleep 1
@@ -33,6 +33,7 @@ echo "   portfolio-analytics:   http://localhost:9009/mcp"
 echo "   volatility:            http://localhost:9010/mcp"
 echo "   simulation-engine:     http://localhost:9012/mcp"
 echo "   notification-gateway:  http://localhost:9013/mcp  (includes alerts)"
+echo "   strategy-manager:      http://localhost:9014/mcp"
 echo ""
 echo "🔗 Docker URLs (for Archestra):"
 echo "   Use: http://172.17.0.1:900X/mcp"

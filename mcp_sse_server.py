@@ -53,6 +53,11 @@ def create_app(server_name: str, server_path: str):
         import importlib
         notif_module = importlib.import_module("notification-gateway.server")
         mcp = notif_module.mcp
+    elif server_name == "strategy-manager":
+        sys.path.insert(0, str(Path(server_path).parent.parent))
+        import importlib
+        strategy_module = importlib.import_module("strategy-manager.server")
+        mcp = strategy_module.mcp
     else:
         raise ValueError(f"Unknown server: {server_name}")
     
@@ -116,6 +121,10 @@ SERVERS = {
     "notification-gateway": {
         "path": "mcp-servers/notification-gateway/server.py",
         "port": 9013
+    },
+    "strategy-manager": {
+        "path": "mcp-servers/strategy-manager/server.py",
+        "port": 9014
     }
 }
 
