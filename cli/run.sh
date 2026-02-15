@@ -1,49 +1,50 @@
-#!/usr/bin/env fish
+#!/usr/bin/env sh
 
 # AutoFinance CLI - Launcher Script
 
 # Colors
-set -l cyan (set_color cyan)
-set -l green (set_color green)
-set -l yellow (set_color yellow)
-set -l red (set_color red)
-set -l reset (set_color normal)
+cyan='\033[0;36m'
+green='\033[0;32m'
+yellow='\033[0;33m'
+red='\033[0;31m'
+reset='\033[0m'
 
-echo "$cyan"
+printf "${cyan}"
 echo "╔══════════════════════════════════════╗"
 echo "║      AutoFinance CLI Launcher        ║"
 echo "╚══════════════════════════════════════╝"
-echo "$reset"
+printf "${reset}"
 
 # Check if virtual environment exists
-if not test -d venv
-    echo "$red❌ Virtual environment not found!$reset"
+if [ ! -d venv ]; then
+    printf "${red}❌ Virtual environment not found!${reset}\n"
     echo ""
     echo "Run the installer first:"
-    echo "  ./install.fish"
+    echo "  ./install.sh"
     exit 1
-end
+fi
 
 # Activate virtual environment
-source venv/bin/activate.fish
-echo "$green✓ Virtual environment activated$reset"
+. venv/bin/activate
+printf "${green}✓ Virtual environment activated${reset}\n"
 
 # Check if MCP servers are running
-set server_count (ps aux | grep "mcp_sse_server.py" | grep -v grep | wc -l)
+server_count=$(ps aux | grep "mcp_sse_server.py" | grep -v grep | wc -l)
 
-if test $server_count -lt 5
-    echo "$yellow⚠️  Warning: MCP servers may not be running$reset"
+if [ "$server_count" -lt 5 ]; then
+    printf "${yellow}⚠️  Warning: MCP servers may not be running${reset}\n"
     echo "   Expected: 13 servers, Found: $server_count"
     echo ""
-    echo "   Start servers with: cd .. && ./start_sse_servers.fish"
+    echo "   Start servers with: cd .. && ./start_sse_servers.sh"
     echo ""
-    read -P "Continue anyway? [y/N] " -l response
-    if test "$response" != "y" -a "$response" != "Y"
+    printf "Continue anyway? [y/N] "
+    read response
+    if [ "$response" != "y" ] && [ "$response" != "Y" ]; then
         exit 0
-    end
+    fi
 else
-    echo "$green✓ MCP servers: $server_count active$reset"
-end
+    printf "${green}✓ MCP servers: $server_count active${reset}\n"
+fi
 
 echo ""
 echo "🚀 Launching AutoFinance Dashboard..."

@@ -737,8 +737,8 @@ You show possibilities backed by real data. You don't execute.
 
 1. Start all MCP servers:
    ```bash
-   cd /home/cryptosaiyan/Documents/AutoFinance
-   ./start_sse_servers.fish
+   cd AutoFinance
+   ./start_sse_servers.sh
    ```
 
 2. Verify servers are running:
@@ -885,7 +885,7 @@ This system showcases:
 
 ### Start Servers
 ```bash
-./start_sse_servers.fish
+./start_sse_servers.sh
 ```
 
 ### Stop Servers

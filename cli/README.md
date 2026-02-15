@@ -37,7 +37,7 @@ A beautiful, intuitive terminal-based interface for the AutoFinance trading syst
 ## Installation
 
 ```bash
-cd /home/cryptosaiyan/Documents/AutoFinance/cli
+cd cli
 pip install -r requirements.txt
 ```
 
@@ -188,7 +188,7 @@ cli/
 ## Troubleshooting
 
 ### Charts not updating
-- Ensure MCP servers are running: `./start_sse_servers.fish`
+- Ensure MCP servers are running: `./start_sse_servers.sh`
 - Check internet connection for data sources
 - Verify symbols are correct
 

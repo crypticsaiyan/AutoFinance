@@ -1,4 +1,4 @@
-#!/usr/bin/env fish
+#!/usr/bin/env sh
 
 # AutoFinance CLI - Installation Script
 
@@ -6,42 +6,42 @@ echo "🚀 Installing AutoFinance CLI..."
 echo ""
 
 # Check Python version
-set python_version (python3 --version 2>&1 | cut -d' ' -f2)
+python_version=$(python3 --version 2>&1 | cut -d' ' -f2)
 echo "✓ Python version: $python_version"
 
 # Create virtual environment if it doesn't exist
-if not test -d venv
+if [ ! -d venv ]; then
     echo ""
     echo "📁 Creating virtual environment..."
     python3 -m venv venv
     
-    if test $status -ne 0
+    if [ $? -ne 0 ]; then
         echo "❌ Failed to create virtual environment!"
         exit 1
-    end
-end
+    fi
+fi
 
 # Activate virtual environment
 echo "🔧 Activating virtual environment..."
-source venv/bin/activate.fish
+. venv/bin/activate
 
 # Install dependencies
 echo ""
 echo "📦 Installing dependencies..."
 pip install -r requirements.txt
 
-if test $status -eq 0
+if [ $? -eq 0 ]; then
     echo ""
     echo "✅ Installation complete!"
     echo ""
     echo "To run the CLI:"
-    echo "  source venv/bin/activate.fish"
+    echo "  . venv/bin/activate"
     echo "  python main.py"
     echo ""
     echo "Or use the launcher:"
-    echo "  ./run.fish"
+    echo "  ./run.sh"
 else
     echo ""
     echo "❌ Installation failed!"
     exit 1
-end
+fi

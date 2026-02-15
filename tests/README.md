@@ -236,8 +236,8 @@ pip install requests yfinance
 
 ### Start Servers Before Testing
 ```bash
-cd /home/cryptosaiyan/Documents/AutoFinance
-./start_sse_servers.fish
+cd ..
+./start_sse_servers.sh
 
 # Verify servers running
 ps aux | grep "mcp_sse_server.py" | grep -v grep | wc -l
@@ -258,7 +258,7 @@ ss -tuln | grep 900[1-9]
 
 # Restart servers
 pkill -f "mcp_sse_server.py"
-./start_sse_servers.fish
+./start_sse_servers.sh
 ```
 
 ### Yahoo Finance Rate Limiting

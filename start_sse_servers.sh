@@ -1,20 +1,21 @@
-#!/usr/bin/env fish
+#!/usr/bin/env sh
 
 # Start all MCP servers with HTTP/SSE transport
 
-set PYTHON ~/Documents/AutoFinance/venv/bin/python
-set SCRIPT ~/Documents/AutoFinance/mcp_sse_server.py
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PYTHON="$SCRIPT_DIR/venv/bin/python"
+SCRIPT="$SCRIPT_DIR/mcp_sse_server.py"
 
 echo "🚀 Starting AutoFinance MCP Servers (HTTP/SSE)"
 echo "=============================================="
 echo ""
 
 # Start each server in background
-for server in market risk execution compliance technical fundamental macro news portfolio-analytics volatility simulation-engine notification-gateway
+for server in market risk execution compliance technical fundamental macro news portfolio-analytics volatility simulation-engine notification-gateway; do
     echo "  Starting $server..."
     $PYTHON $SCRIPT $server &
     sleep 1
-end
+done
 
 echo ""
 echo "✅ All servers started!"

@@ -24,9 +24,9 @@ Terminal-based unified trading dashboard with real-time charts, AI copilot, and 
 
 ### 1. Installation
 
-```fish
+```bash
 cd cli
-./install.fish
+./install.sh
 ```
 
 This creates a virtual environment and installs all dependencies:
@@ -38,9 +38,9 @@ This creates a virtual environment and installs all dependencies:
 
 ### 2. Start MCP Servers
 
-```fish
+```bash
 cd ..
-./start_sse_servers.fish
+./start_sse_servers.sh
 ```
 
 This launches 13 MCP servers on ports 9001-9013:
@@ -52,14 +52,14 @@ This launches 13 MCP servers on ports 9001-9013:
 
 ### 3. Launch Dashboard
 
-```fish
+```bash
 cd cli
-./run.fish
+./run.sh
 ```
 
 Or manually:
-```fish
-source venv/bin/activate.fish
+```bash
+. venv/bin/activate
 python main.py
 ```
 
@@ -320,27 +320,27 @@ python test_imports.py
 ```
 
 If failures:
-```fish
-source venv/bin/activate.fish
+```bash
+. venv/bin/activate
 pip install -r requirements.txt
 ```
 
 ### MCP Servers Not Running
-```fish
-cd /home/cryptosaiyan/Documents/AutoFinance
-./start_sse_servers.fish
+```bash
+cd ..
+./start_sse_servers.sh
 ```
 
 Check ports:
-```fish
+```bash
 lsof -i :9001-9013
 ```
 
 ### Virtual Environment Issues
 Delete and recreate:
-```fish
+```bash
 rm -rf venv
-./install.fish
+./install.sh
 ```
 
 ### Chart Not Updating
@@ -363,8 +363,8 @@ cli/
 ├── dashboard.py         # Unified dashboard
 ├── config.yaml          # Configuration
 ├── requirements.txt     # Dependencies
-├── install.fish         # Installer
-├── run.fish             # Launcher
+├── install.sh           # Installer
+├── run.sh               # Launcher
 ├── test_imports.py      # Import validator
 ├── components/
 │   ├── charts.py        # Chart rendering

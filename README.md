@@ -105,8 +105,8 @@ Level 1: Portfolio Manager (CEO)
 
 ### 1. Install Dependencies
 ```bash
-cd /home/cryptosaiyan/Documents/AutoFinance
-source venv/bin/activate.fish  # or activate for bash
+cd AutoFinance
+. venv/bin/activate
 pip install -r mcp-servers/requirements.txt
 ```
 
@@ -114,7 +114,7 @@ Key packages: `mcp>=0.9.0`, `fastmcp>=0.2.0`, `yfinance>=1.1.0`
 
 ### 2. Start All MCP Servers
 ```bash
-./start_sse_servers.fish
+./start_sse_servers.sh
 ```
 
 This starts all 13 servers on ports 9001-9013. Each server uses Streamable HTTP transport on `/mcp` endpoint.
@@ -213,8 +213,8 @@ AutoFinance includes a beautiful, intuitive terminal-based interface for interac
 ### Quick Start
 ```bash
 cd cli
-./install.fish      # Install dependencies
-./run.fish          # Launch CLI
+./install.sh      # Install dependencies
+./run.sh          # Launch CLI
 ```
 
 Or run directly:
@@ -524,8 +524,8 @@ AutoFinance/
 │   ├── dashboard_textual.py       # Textual-based dashboard
 │   ├── config.yaml                # CLI configuration
 │   ├── CLI_README.md              # CLI documentation
-│   ├── install.fish               # Installation script
-│   ├── run.fish                   # Launch script
+│   ├── install.sh                 # Installation script
+│   ├── run.sh                     # Launch script
 │   ├── components/                # UI components
 │   │   ├── charts.py
 │   │   ├── chatbox.py
@@ -547,7 +547,7 @@ AutoFinance/
 │   ├── test_all_servers.py        # Master test runner
 │   └── README.md                  # Testing documentation
 ├── mcp_sse_server.py              # Main server wrapper
-├── start_sse_servers.fish         # Startup script
+├── start_sse_servers.sh           # Startup script
 ├── alert_monitor.py               # Alert monitoring daemon
 ├── Agent_def.md                   # Agent configurations
 ├── README.md                      # This file
