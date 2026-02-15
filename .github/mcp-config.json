@@ -1,0 +1,65 @@
+// copy this to .copilot/mcp-config.json and update the URLs as needed for your local MCP servers
+{
+  "mcpServers": {
+    "market": {
+      "type": "http",
+      "url": "http://localhost:9001/mcp",
+      "tools": ["*"]
+    },
+    "risk": {
+      "type": "http",
+      "url": "http://localhost:9002/mcp",
+      "tools": ["*"]
+    },
+    "execution": {
+      "type": "http",
+      "url": "http://localhost:9003/mcp",
+      "tools": ["*"]
+    },
+    "compliance": {
+      "type": "http",
+      "url": "http://localhost:9004/mcp",
+      "tools": ["*"]
+    },
+    "technical": {
+      "type": "http",
+      "url": "http://localhost:9005/mcp",
+      "tools": ["*"]
+    },
+    "fundamental": {
+      "type": "http",
+      "url": "http://localhost:9006/mcp",
+      "tools": ["*"]
+    },
+    "macro": {
+      "type": "http",
+      "url": "http://localhost:9007/mcp",
+      "tools": ["*"]
+    },
+    "news": {
+      "type": "http",
+      "url": "http://localhost:9008/mcp",
+      "tools": ["*"]
+    },
+    "portfolio-analytics": {
+      "type": "http",
+      "url": "http://localhost:9009/mcp",
+      "tools": ["*"]
+    },
+    "volatility": {
+      "type": "http",
+      "url": "http://localhost:9010/mcp",
+      "tools": ["*"]
+    },
+    "simulation-engine": {
+      "type": "http",
+      "url": "http://localhost:9012/mcp",
+      "tools": ["*"]
+    },
+    "notification-gateway": {
+      "type": "http",
+      "url": "http://localhost:9013/mcp",
+      "tools": ["*"]
+    }
+  }
+}
