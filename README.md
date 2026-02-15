@@ -23,17 +23,14 @@
 
 <div align="center">
 
-### Dashboard View
-<!-- Add screenshot here: ![Dashboard](docs/screenshots/dashboard.png) -->
-*Coming soon: Multi-chart dashboard with real-time market data*
-
 ### CLI Interface
-<!-- Add screenshot here: ![CLI](docs/screenshots/cli.png) -->
-*Coming soon: Beautiful terminal-based interface with Braille charts*
+![CLI](assets/landi.png) 
+
+### Dashboard View
+![Dashboard](assets/dashboard.png)
 
 ### Agent Orchestration
-<!-- Add screenshot here: ![Agents](docs/screenshots/agents.png) -->
-*Coming soon: 12-agent hierarchy with Archestra orchestration*
+![Agents](assets/image.png)
 
 </div>
 
@@ -57,27 +54,6 @@ AutoFinance is an **AI-powered financial control plane** that combines:
 - ⚠️ Risk assessment and position validation
 - 🔔 Price alerts and strategy simulations
 - 📝 Comprehensive audit trails for compliance
-
----
-
-## 📋 Table of Contents
-
-- [Features](#-features)
-- [Screenshots](#-screenshots)
-- [Architecture](#-architecture)
-- [Quick Start](#-quick-start)
-- [CLI Interface](#-cli-interface)
-- [Testing](#-testing)
-- [Real Data Examples](#-real-data-examples)
-- [Demo Scenarios](#-demo-scenarios)
-- [Security & Compliance](#-security--compliance)
-- [Advanced Configuration](#-advanced-configuration)
-- [Project Structure](#-project-structure)
-- [Key Technical Decisions](#-key-technical-decisions)
-- [Support & Troubleshooting](#-support--troubleshooting)
-- [Contributing](#-contributing)
-- [License](#-license)
-- [Acknowledgments](#-acknowledgments)
 
 ---
 
@@ -582,46 +558,6 @@ AutoFinance/
 
 ---
 
-## 🎓 Key Technical Decisions
-
-### Why Streamable HTTP (not SSE)?
-- Archestra requires Streamable HTTP on `/mcp` endpoint
-- SSE is deprecated for remote MCP servers
-- DNS rebinding protection must be disabled for Docker bridge access
-
-### Why 172.17.0.1 (not localhost)?
-- Archestra runs in Docker container
-- Can only reach host via Docker bridge IP (172.17.0.1)
-- localhost resolves to container itself, not host
-
-### Why Yahoo Finance (not paid APIs)?
-- **Free:** No API keys, no rate limits (reasonable usage)
-- **Comprehensive:** Prices, fundamentals, historical data
-- **Reliable:** yfinance library maintained and well-tested
-- **Real Data:** Not simulations, actual market information
-
-### Why 12 Agents (not fewer)?
-- **Separation of Concerns:** Each agent has one clear responsibility
-- **Scalability:** Easy to add more specialists without refactoring
-- **Showcase A2A:** Demonstrates agent-to-agent protocols extensively
-- **Production Pattern:** Mirrors microservices architecture
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
-
-### Development Setup
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Install dependencies (`pip install -r mcp-servers/requirements.txt`)
-4. Make your changes
-5. Run tests (`cd tests && python test_all_servers.py`)
-6. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-7. Push to the branch (`git push origin feature/AmazingFeature`)
-8. Open a Pull Request
-
 ### Future Enhancements
 - 🎯 Add investor features (retirement planning, diversification scoring)
 - 📊 Integrate paid APIs (Bloomberg, Refinitiv) for institutional data
@@ -636,125 +572,3 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## 🙏 Acknowledgments
-
-- **WeMakeDevs** for organizing "2 Fast 2 MCP" hackathon
-- **Anthropic** for Model Context Protocol specification
-- **Archestra** for AI orchestration platform
-- **Yahoo Finance** for free, reliable market data
-- **FastMCP** for excellent Python MCP framework
-
----
-
-<div align="center">
-
-**Built with ❤️ by the AutoFinance Team**
-
-**Status:** Production-Ready ✅  
-**Tests:** Passing ✅  
-**Data:** 100% Real from Yahoo Finance ✅
-
-[⬆ Back to Top](#-autofinance)
-
-</div>
-
-### Servers Not Starting?
-```bash
-# Check if ports are in use
-netstat -tuln | grep 900[1-9]
-
-# Kill existing servers
-pkill -f "mcp_sse_server.py"
-
-# Restart
-./start_sse_servers.fish
-```
-
-### Archestra Can't Connect?
-```bash
-# Verify servers are listening on correct IP
-ss -tuln | grep 900[1-9]
-
-# Test manually
-curl -X POST http://172.17.0.1:9001/mcp \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}'
-```
-
-### Tests Failing?
-```bash
-# Make sure servers are running
-ps aux | grep "mcp_sse_server.py"
-
-# Check if yfinance can fetch data
-python -c "import yfinance; print(yfinance.download('AAPL', period='1d'))"
-
-# Run individual test with verbose output
-cd tests
-python test_market_server.py
-```
-
-### Virtual Environment Issues?
-```bash
-# Recreate venv
-rm -rf venv
-python -m venv venv
-source venv/bin/activate.fish  # or .bash
-pip install -r mcp-servers/requirements.txt
-```
-
----
-
-## 📚 Additional Resources
-
-- [Agent_def.md](Agent_def.md) - Complete agent system prompts and configurations
-- [MCP Documentation](https://modelcontextprotocol.io/docs) - MCP protocol specification
-- [Archestra Docs](https://archestra.ai/docs) - AI orchestration platform
-- [yfinance Docs](https://pypi.org/project/yfinance/) - Yahoo Finance API library
-
----
-
-## 🤝 Contributing
-
-**For Hackathon Submission:**
-This project is complete and ready for evaluation.
-
-**For Future Development:**
-- Add investor features (retirement planning, diversification scoring)
-- Integrate paid APIs (Bloomberg, Refinitiv) for institutional data
-- Implement backtesting engine for strategy validation
-- Add web UI for direct user interaction
-- Deploy to cloud (AWS, GCP, Azure) with Kubernetes
-
----
-
-## 📄 License
-
-MIT License - See LICENSE file for details
-
----
-
-## 🙏 Acknowledgments
-
-- **WeMakeDevs** for organizing "2 Fast 2 MCP" hackathon
-- **Anthropic** for Model Context Protocol specification
-- **Archestra** for AI orchestration platform
-- **Yahoo Finance** for free, reliable market data
-- **FastMCP** for excellent Python MCP framework
-
----
-
-<div align="center">
-
-**Built with ❤️ by the AutoFinance Team**
-
-**Status:** Production-Ready ✅  
-**Tests:** Passing ✅  
-**Data:** 100% Real from Yahoo Finance ✅
-
-[⬆ Back to Top](#-autofinance)
-
-</div>
