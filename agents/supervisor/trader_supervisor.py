@@ -1,1 +1,0 @@
-# Trader Supervisor Agent

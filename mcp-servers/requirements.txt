@@ -1,0 +1,32 @@
+# AutoFinance MCP Servers - Requirements
+
+# Core MCP dependencies
+mcp>=0.9.0
+fastmcp>=0.2.0
+
+# Real data sources
+yfinance>=0.2.36
+requests>=2.31.0
+python-dotenv>=1.0.0
+
+# Database
+sqlalchemy>= 2.0.0
+psycopg2-binary>=2.9.9  # For PostgreSQL
+
+# Data processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Notifications
+slack-sdk>=3.27.0  # For Slack integration
+twilio>=9.0.0     # For WhatsApp and SMS
+
+# Optional: Advanced sentiment
+# openai>=1.0.0
+
+# Standard library extensions
+python-dateutil>=2.8.2
+
+# Optional: For production deployments
+# uvicorn>=0.20.0
+# pydantic>=2.0.0
